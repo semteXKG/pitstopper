@@ -256,7 +256,7 @@ lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtim
 ✅ Clock updates every second with proper lifecycle management  
 ✅ Clock stops updating when app is paused (battery efficient)  
 ✅ Clock resumes updating when app is visible  
-✅ Settings button (cog icon) added to top right corner  
+✅ Settings button (cog icon - 96dp, easy to tap with gloves) in top right  
 ✅ SettingsActivity created with pit window configuration UI  
 ✅ Time picker for race start time (e.g., 09:00)  
 ✅ Pit window opens after X minutes configuration (e.g., 17 minutes)  
@@ -266,8 +266,14 @@ lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtim
 ✅ PitWindowPreferences helper class created  
 ✅ Settings load defaults on first launch (09:00, 17min, 6min)  
 ✅ Settings persist even if app is force closed  
-✅ Example: Race start 09:00 + 17min = alert from 09:17 to 09:23 (17+6)  
+✅ **PitWindowAlertManager implemented with two states: IDLE and ON_ALERT**  
+✅ Alert manager calculates recurring pit windows correctly  
+✅ Example: Race at 09:00, opens after 17min, duration 6min → windows at 09:17-09:23, 09:37-09:43, 09:57-10:03  
+✅ Window cycle calculation: opensAfter + ceil(duration/2) = 17 + 3 = 20 minutes  
+✅ Comprehensive unit tests (16 tests, all passing)  
+✅ Tests cover: before race, between windows, during windows, hour boundaries, edge cases  
+✅ Helper methods: getNextPitWindowStart(), getCurrentPitWindowEnd(), getRaceStartTime()  
 ✅ App builds successfully  
-⏳ Working on **Phase 2: Driver Swap Alert System** - Next: Timer management and alert triggering
+⏳ Working on **Phase 2: Driver Swap Alert System** - Next: Visual flash alert system
 
 

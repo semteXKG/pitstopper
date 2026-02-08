@@ -10,17 +10,17 @@
 
     <ImageButton
         android:id="@+id/buttonSettings"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_margin="16dp"
-        android:padding="8dp"
-        android:scaleType="fitCenter"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/settings"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
         android:src="@drawable/ic_settings"
-        app:tint="@color/text_primary"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/text_primary" />
 
     <TextView
         android:id="@+id/textCurrentTime"
