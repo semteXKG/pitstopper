@@ -172,4 +172,90 @@ public class PitWindowAlertManager {
         result.set(Calendar.MILLISECOND, 0);
         return result;
     }
+
+    /**
+     * Gets the progress through the current stage (0-100).
+     * If IDLE: Returns progress from end of previous pit window toward start of next pit window (0-100).
+     * If ON_ALERT: Returns progress through the current pit window (0-100).
+     *
+     * @param currentHour Current hour (0-23)
+     * @param currentMinute Current minute (0-59)
+     * @param currentSecond Current second (0-59)
+     * @return Progress percentage (0-100)
+     */
+    public int getProgressInCurrentStage(int currentHour, int currentMinute, int currentSecond) {
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.HOUR_OF_DAY, currentHour);
+        now.set(Calendar.MINUTE, currentMinute);
+        now.set(Calendar.SECOND, currentSecond);
+        now.set(Calendar.MILLISECOND, 0);
+
+        AlertState currentState = getAlertState(currentHour, currentMinute);
+
+        if (currentState == AlertState.ON_ALERT) {
+            // In pit window: show progress from window start to window end
+            Calendar windowEnd = getCurrentPitWindowEnd(currentHour, currentMinute);
+            if (windowEnd == null) {
+                return 0;
+            }
+
+            long totalWindowMillis = pitWindowDurationMinutes * 60000L;
+            long remainingMillis = windowEnd.getTimeInMillis() - now.getTimeInMillis();
+            long elapsedMillis = totalWindowMillis - remainingMillis;
+
+            if (elapsedMillis < 0) {
+                return 0;
+            }
+
+            int progress = (int) ((elapsedMillis * 100) / totalWindowMillis);
+            return Math.min(100, Math.max(0, progress));
+
+        } else {
+            // IDLE: show progress from last window end toward next window start
+            Calendar nextWindow = getNextPitWindowStart(currentHour, currentMinute);
+            if (nextWindow == null) {
+                return 0;
+            }
+
+            // Calculate the cycle length
+            int cycleMinutes = windowRepeatCycleMinutes;
+            long cycleMillis = cycleMinutes * 60000L;
+
+            // Time until next window
+            long millisUntilWindow = nextWindow.getTimeInMillis() - now.getTimeInMillis();
+
+            // The idle period is: cycle - window duration
+            // Progress through idle period
+            long idlePeriodMillis = (cycleMinutes - pitWindowDurationMinutes) * 60000L;
+
+            // How far through the idle period are we?
+            // We start idle period after window ends
+            // millisUntilWindow counts down to next window start
+            // So elapsed idle time = idlePeriod - millisUntilWindow
+            long elapsedIdleMillis = idlePeriodMillis - millisUntilWindow;
+
+            if (elapsedIdleMillis < 0) {
+                // Just ended a window, or before race start
+                Calendar raceStart = getRaceStartTime();
+                long millisSinceStart = now.getTimeInMillis() - raceStart.getTimeInMillis();
+
+                if (millisSinceStart < 0) {
+                    // Before race start
+                    return 0;
+                }
+
+                if (millisSinceStart < pitWindowOpensAfterMinutes * 60000L) {
+                    // In first idle period before first window
+                    long firstIdleMillis = pitWindowOpensAfterMinutes * 60000L;
+                    int progress = (int) ((millisSinceStart * 100) / firstIdleMillis);
+                    return Math.min(100, Math.max(0, progress));
+                }
+
+                return 0;
+            }
+
+            int progress = (int) ((elapsedIdleMillis * 100) / idlePeriodMillis);
+            return Math.min(100, Math.max(0, progress));
+        }
+    }
 }

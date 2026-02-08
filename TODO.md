@@ -80,12 +80,18 @@
 - [ ] Implement progressive urgency (faster flash as deadline approaches)
 
 ### 2.4 Timer UI Components
-- [ ] Add countdown display showing time until next swap
-- [ ] Create visual progress indicator (circular or linear)
-- [ ] Add "Start Timer" button to begin first session
-- [ ] Add "Reset/Swap Complete" button to acknowledge driver swap
-- [ ] Add "Emergency Stop" button to pause timing
-- [ ] Show session count (e.g., "Session 3 of 12")
+- [x] Add countdown display showing time until next pit window (MM:SS format)
+- [x] Position countdown below main clock, centered, smaller font size (60sp)
+- [x] Update countdown every second along with clock
+- [x] Show countdown during IDLE state (time until window opens)
+- [x] During ON_ALERT state, show time remaining in current pit window
+- [x] Create vertical progress indicator on left side showing position in pit window cycle
+- [x] Progress calculation moved to PitWindowAlertManager.getProgressInCurrentStage()
+- [x] IDLE state: progress bar shows 0-100% through idle period toward next window
+- [x] ON_ALERT state: progress bar shows 0-100% through current pit window
+- [x] Comprehensive unit tests for getProgressInCurrentStage() (13 new test cases, 29 total tests passing)
+- [ ] Optional: Add "Start Timer", "Reset/Swap Complete", "Emergency Stop" buttons
+- [ ] Optional: Show session count (e.g., "Session 3 of 12")
 
 ### 2.5 Alert Notification System
 - [ ] Create notification channel for alerts
@@ -256,7 +262,7 @@ lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtim
 ✅ Clock updates every second with proper lifecycle management  
 ✅ Clock stops updating when app is paused (battery efficient)  
 ✅ Clock resumes updating when app is visible  
-✅ Settings button (cog icon - 96dp, easy to tap with gloves) in top right  
+✅ Settings button (cog icon - 64dp) in top right  
 ✅ SettingsActivity created with pit window configuration UI  
 ✅ Time picker for race start time (e.g., 09:00)  
 ✅ Pit window opens after X minutes configuration (e.g., 17 minutes)  
@@ -273,7 +279,21 @@ lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtim
 ✅ Comprehensive unit tests (16 tests, all passing)  
 ✅ Tests cover: before race, between windows, during windows, hour boundaries, edge cases  
 ✅ Helper methods: getNextPitWindowStart(), getCurrentPitWindowEnd(), getRaceStartTime()  
+✅ **Visual flashing alert integrated into MainActivity**  
+✅ Screen flashes green/black every 2 seconds during pit window (ON_ALERT)  
+✅ Flash pattern: seconds % 4 < 2 = black, else = darker green (#00AA00)  
+✅ Alert manager reloaded on resume (picks up settings changes)  
+✅ **Countdown timer added below main clock (60sp, MM:SS format)**  
+✅ IDLE: Shows time until next pit window opens  
+✅ ON_ALERT: Shows time remaining in current pit window  
+✅ Updates every second with precise millisecond calculation  
+✅ **Vertical progress bar on left side (24dp wide, full height)**  
+✅ Shows position in current pit window cycle (0-100%)  
+✅ Green progress indicator (#00AA00)  
+✅ Updates every second with precise calculation  
+✅ Fills from bottom to top (rotation 180°)  
 ✅ App builds successfully  
-⏳ Working on **Phase 2: Driver Swap Alert System** - Next: Visual flash alert system
+✅ All tests passing  
+⏳ **Phase 2 Core Functionality Complete!** Optional enhancements remaining.
 
 

@@ -11,4 +11,5 @@
     <!-- App specific colors -->
     <color name="background_primary">#FF000000</color>
     <color name="text_primary">#FFFFFFFF</color>
+    <color name="alert_green">#FF00AA00</color>
 </resources>
