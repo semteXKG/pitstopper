@@ -276,9 +276,16 @@ lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtim
 ✅ Alert manager calculates recurring pit windows correctly  
 ✅ Example: Race at 09:00, opens after 17min, duration 6min → windows at 09:17-09:23, 09:37-09:43, 09:57-10:03  
 ✅ Window cycle calculation: opensAfter + ceil(duration/2) = 17 + 3 = 20 minutes  
-✅ Comprehensive unit tests (16 tests, all passing)  
+✅ Comprehensive unit tests (42 tests, all passing)  
 ✅ Tests cover: before race, between windows, during windows, hour boundaries, edge cases  
 ✅ Helper methods: getNextPitWindowStart(), getCurrentPitWindowEnd(), getRaceStartTime()  
+✅ **State management with window-specific suppression implemented**  
+✅ State transitions: IDLE → ON_ALERT when entering pit window  
+✅ State transitions: ON_ALERT → IDLE when exiting window or clearAlert() called  
+✅ clearAlert() method suppresses alert for remainder of current pit window only  
+✅ Alert resumes in next pit window after being cleared  
+✅ 14 comprehensive state management tests added (all passing)  
+✅ clearAlert() overloaded for production use (no params) and testing (with time params)  
 ✅ **Visual flashing alert integrated into MainActivity**  
 ✅ Screen flashes green/black every 2 seconds during pit window (ON_ALERT)  
 ✅ Flash pattern: seconds % 4 < 2 = black, else = darker green (#00AA00)  

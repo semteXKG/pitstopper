@@ -10,6 +10,12 @@ import java.util.Calendar;
  * then windows repeat at an interval calculated to ensure proper spacing.
  * For example: Race at 09:00, opens after 17 min, duration 6 min
  * gives windows at 09:17-09:23, 09:37-09:43, 09:57-10:03 (20-minute cycle).
+ *
+ * State Management:
+ * - Maintains current alert state (IDLE or ON_ALERT)
+ * - State transitions IDLE → ON_ALERT when entering a pit window
+ * - State transitions ON_ALERT → IDLE when exiting a pit window or clearAlert() is called
+ * - Once clearAlert() is called, alert will not resume until the next pit window
  */
 public class PitWindowAlertManager {
 
@@ -23,6 +29,10 @@ public class PitWindowAlertManager {
     private final int pitWindowOpensAfterMinutes;
     private final int pitWindowDurationMinutes;
     private final int windowRepeatCycleMinutes;
+
+    // State management
+    private AlertState currentState;
+    private Integer suppressedWindowIndex; // Track which window we've suppressed alerts for
 
     /**
      * Creates a new PitWindowAlertManager.
@@ -41,20 +51,98 @@ public class PitWindowAlertManager {
         // Windows repeat at an interval: opens after + half duration (rounded)
         // This gives 17 + 3 = 20 for the example (17, 6)
         this.windowRepeatCycleMinutes = pitWindowOpensAfterMinutes + (pitWindowDurationMinutes + 1) / 2;
+        this.currentState = AlertState.IDLE;
+        this.suppressedWindowIndex = null;
     }
 
     /**
      * Determines the current alert state based on the given time.
+     * Updates internal state on each call.
+     * State transitions:
+     * - IDLE → ON_ALERT: When entering a pit window (unless suppressed)
+     * - ON_ALERT → IDLE: When exiting a pit window
+     * - Once clearAlert() is called during a window, that window is suppressed
      *
      * @param currentHour Current hour (0-23)
      * @param currentMinute Current minute (0-59)
-     * @return AlertState.ON_ALERT if within a pit window, AlertState.IDLE otherwise
+     * @return AlertState.ON_ALERT if within a pit window (and not suppressed), AlertState.IDLE otherwise
      */
     public AlertState getAlertState(int currentHour, int currentMinute) {
-        if (isInPitWindow(currentHour, currentMinute)) {
-            return AlertState.ON_ALERT;
+        boolean inWindow = isInPitWindow(currentHour, currentMinute);
+        int currentWindowIndex = getCurrentWindowIndex(currentHour, currentMinute);
+
+        if (inWindow) {
+            // Check if this window is suppressed
+            if (suppressedWindowIndex != null && suppressedWindowIndex.equals(currentWindowIndex)) {
+                // This window was cleared - stay in IDLE
+                currentState = AlertState.IDLE;
+            } else {
+                // Enter ON_ALERT state for this window
+                currentState = AlertState.ON_ALERT;
+            }
+        } else {
+            // Outside pit window - always IDLE
+            currentState = AlertState.IDLE;
+
+            // Clear suppression when we exit a window
+            if (suppressedWindowIndex != null && suppressedWindowIndex < currentWindowIndex) {
+                suppressedWindowIndex = null;
+            }
         }
-        return AlertState.IDLE;
+
+        return currentState;
+    }
+
+    /**
+     * Clears the current alert and suppresses it for the remainder of the current pit window.
+     * This prevents the alert from resuming while still in the same pit window.
+     * The alert will be eligible to trigger again in the next pit window.
+     * Call this when the car has stopped in the pits (e.g., detected by GPS).
+     */
+    public void clearAlert() {
+        Calendar now = Calendar.getInstance();
+        int currentHour = now.get(Calendar.HOUR_OF_DAY);
+        int currentMinute = now.get(Calendar.MINUTE);
+        clearAlert(currentHour, currentMinute);
+    }
+
+    /**
+     * Clears the current alert and suppresses it for the remainder of the current pit window.
+     * This prevents the alert from resuming while still in the same pit window.
+     * The alert will be eligible to trigger again in the next pit window.
+     * This overload accepts specific time for testing purposes.
+     *
+     * @param currentHour Current hour (0-23)
+     * @param currentMinute Current minute (0-59)
+     */
+    public void clearAlert(int currentHour, int currentMinute) {
+        if (isInPitWindow(currentHour, currentMinute)) {
+            // Suppress this specific window
+            suppressedWindowIndex = getCurrentWindowIndex(currentHour, currentMinute);
+        }
+
+        currentState = AlertState.IDLE;
+    }
+
+    /**
+     * Gets the index of the current pit window (0 for first window, 1 for second, etc.).
+     * Returns -1 if before the race or before the first pit window.
+     *
+     * @param currentHour Current hour (0-23)
+     * @param currentMinute Current minute (0-59)
+     * @return Window index, or -1 if before first window
+     */
+    private int getCurrentWindowIndex(int currentHour, int currentMinute) {
+        int raceStartMinutes = raceStartHour * 60 + raceStartMinute;
+        int currentMinutes = currentHour * 60 + currentMinute;
+        int minutesSinceRaceStart = currentMinutes - raceStartMinutes;
+
+        if (minutesSinceRaceStart < pitWindowOpensAfterMinutes) {
+            return -1; // Before first window
+        }
+
+        int minutesSinceFirstWindow = minutesSinceRaceStart - pitWindowOpensAfterMinutes;
+        return minutesSinceFirstWindow / windowRepeatCycleMinutes;
     }
 
     /**
@@ -219,7 +307,6 @@ public class PitWindowAlertManager {
 
             // Calculate the cycle length
             int cycleMinutes = windowRepeatCycleMinutes;
-            long cycleMillis = cycleMinutes * 60000L;
 
             // Time until next window
             long millisUntilWindow = nextWindow.getTimeInMillis() - now.getTimeInMillis();

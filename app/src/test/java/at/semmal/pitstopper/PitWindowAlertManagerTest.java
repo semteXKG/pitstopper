@@ -489,4 +489,267 @@ public class PitWindowAlertManagerTest {
         assertTrue("Progress in window should be high", progressInWindow > 90);
         assertEquals("Progress after window should be 0", 0, progressAfterWindow);
     }
+
+    // ========== STATE MANAGEMENT TESTS ==========
+
+    // Test state transitions from IDLE to ON_ALERT when entering pit window
+    @Test
+    public void testStateTransitionIdleToOnAlert() {
+        // Before first window - should be IDLE
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 16));
+
+        // Enter first window - should transition to ON_ALERT
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+
+        // Stay in first window - should remain ON_ALERT
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 20));
+    }
+
+    // Test state transitions from ON_ALERT to IDLE when exiting pit window
+    @Test
+    public void testStateTransitionOnAlertToIdleNaturally() {
+        // Enter first window
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 20));
+
+        // Exit first window - should transition to IDLE
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 23));
+
+        // Stay outside window - should remain IDLE
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 30));
+    }
+
+    // Test clearAlert() transitions state to IDLE
+    @Test
+    public void testClearAlertTransitionsToIdle() {
+        // Enter first window
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 20));
+
+        // Call clearAlert - should transition to IDLE
+        alertManager.clearAlert(9, 20);
+
+        // Next check should be IDLE (even though still in window time-wise)
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 20));
+    }
+
+    // Test clearAlert() suppresses alert for remainder of current pit window
+    @Test
+    public void testClearAlertSuppressesCurrentWindow() {
+        // Enter first window
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+
+        // Clear the alert
+        alertManager.clearAlert(9, 17);
+
+        // Should stay IDLE for remainder of first window
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 18));
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 20));
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 22));
+    }
+
+    // Test alert resumes in next pit window after clearAlert()
+    @Test
+    public void testAlertResumesInNextWindow() {
+        // Enter and clear first window
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+        alertManager.clearAlert(9, 17);
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 20));
+
+        // Exit first window
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 23));
+
+        // Enter second window - alert should resume
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 37));
+    }
+
+    // Test clearAlert() called outside pit window has no effect
+    @Test
+    public void testClearAlertOutsideWindowNoEffect() {
+        // Before first window
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 10));
+
+        // Call clearAlert outside window
+        alertManager.clearAlert(9, 10);
+
+        // Should still enter ON_ALERT when window opens
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+    }
+
+    // Test clearAlert() only suppresses specific window, not all windows
+    @Test
+    public void testClearAlertOnlyAffectsCurrentWindow() {
+        // Clear first window
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+        alertManager.clearAlert(9, 17);
+
+        // First window suppressed
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 20));
+
+        // Second window should still alert
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 37));
+
+        // Third window should still alert
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 57));
+    }
+
+    // Test multiple consecutive clearAlert() calls
+    @Test
+    public void testMultipleClearAlertCalls() {
+        // Enter first window
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+
+        // Call clearAlert multiple times
+        alertManager.clearAlert(9, 17);
+        alertManager.clearAlert(9, 17);
+        alertManager.clearAlert(9, 17);
+
+        // Should stay IDLE
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 20));
+    }
+
+    // Test clearAlert() at start of window
+    @Test
+    public void testClearAlertAtWindowStart() {
+        // Enter first window at exact start time
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+
+        // Clear immediately
+        alertManager.clearAlert(9, 17);
+
+        // Should suppress for entire window
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 17));
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 22));
+    }
+
+    // Test clearAlert() at end of window
+    @Test
+    public void testClearAlertAtWindowEnd() {
+        // Enter first window near end
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 22));
+
+        // Clear at end
+        alertManager.clearAlert(9, 22);
+
+        // Should be IDLE
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 22));
+
+        // Naturally IDLE after window
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 23));
+    }
+
+    // Test state persistence across multiple checks
+    @Test
+    public void testStatePersistenceAcrossChecks() {
+        // Multiple checks in same window should maintain ON_ALERT
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 18));
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 19));
+
+        // Clear and check multiple times
+        alertManager.clearAlert(9, 19);
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 19));
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 20));
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 21));
+    }
+
+    // Test clearAlert in different windows
+    @Test
+    public void testClearAlertInDifferentWindows() {
+        // Clear first window
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+        alertManager.clearAlert(9, 17);
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 20));
+
+        // Second window should alert normally
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 37));
+
+        // Clear second window
+        alertManager.clearAlert(9, 37);
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 40));
+
+        // Third window should alert normally
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 57));
+    }
+
+    // Test window index transitions
+    @Test
+    public void testWindowIndexTransitions() {
+        // First window (index 0)
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 17));
+        alertManager.clearAlert(9, 17);
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 20));
+
+        // Move past first window to between windows
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(9, 25));
+
+        // Second window (index 1) - suppression should be cleared
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 37));
+    }
+
+    // Test clearAlert() with hour boundary crossing
+    @Test
+    public void testClearAlertAcrossHourBoundary() {
+        // Third window crosses hour boundary (09:57 - 10:03)
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(9, 57));
+
+        // Clear alert
+        alertManager.clearAlert(9, 57);
+
+        // Should remain IDLE even after hour change
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(10, 0));
+        assertEquals(PitWindowAlertManager.AlertState.IDLE,
+                alertManager.getAlertState(10, 2));
+
+        // Fourth window should alert normally
+        assertEquals(PitWindowAlertManager.AlertState.ON_ALERT,
+                alertManager.getAlertState(10, 17));
+    }
 }
+
+
