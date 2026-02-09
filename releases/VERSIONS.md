@@ -1,5 +1,21 @@
 # PitStopper Version History
 
+## Version 1.0.2 (February 9, 2026)
+
+### Changes
+
+- **Scrollable settings screen** - The settings activity is now wrapped in a ScrollView, allowing users to scroll when content doesn't fit on screen (e.g., when keyboard is open or on smaller devices).
+
+---
+
+## Version 1.0.1 (February 9, 2026)
+
+### Changes
+
+- **Fixed flash sequence** - When entering a pit window alert, the screen now starts with green instead of black for the first two seconds. This makes the alert more immediately noticeable.
+
+---
+
 ## Version 1.0.0 (February 8, 2026)
 
 **Initial Release** 🏁
@@ -54,4 +70,5 @@
 ---
 
 *Built for endurance racers who can't afford to miss a pit window.*
+
 

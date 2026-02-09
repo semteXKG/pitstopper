@@ -212,11 +212,11 @@ public class MainActivity extends AppCompatActivity {
                 stageProgress, alertState.name(), currentHour, currentMinute, currentSecond));
 
         if (alertState == PitWindowAlertManager.AlertState.ON_ALERT) {
-            // Flash effect: if seconds % 4 < 2, show black; otherwise show green
+            // Flash effect: if seconds % 4 < 2, show green; otherwise show black
             if (currentSecond % 4 < 2) {
-                rootLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.background_primary));
-            } else {
                 rootLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.alert_green));
+            } else {
+                rootLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.background_primary));
             }
 
             // Show time remaining in current pit window
