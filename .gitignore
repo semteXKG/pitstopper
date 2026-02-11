@@ -5,6 +5,9 @@ build/
 # Local configuration file (sdk path, etc)
 local.properties
 
+# SpeedHive API credentials (sensitive)
+app/src/main/assets/speedhive.properties
+
 # Log/OS Files
 *.log
 

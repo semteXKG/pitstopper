@@ -39,8 +39,88 @@
         android:contentDescription="@string/settings"
         android:src="@drawable/ic_settings"
         app:tint="@color/text_primary"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- SpeedHive Live Timing Panel (right side) -->
+    <LinearLayout
+        android:id="@+id/liveTimingPanel"
+        android:layout_width="120dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="8dp"
+        android:background="#333333"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Gap Ahead Display (TOP) -->
+        <TextView
+            android:id="@+id/textGapAheadLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/gap_ahead_label"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/textGapAhead"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="LEADER"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:fontFamily="monospace" />
+
+        <!-- Position Display (MIDDLE) -->
+        <TextView
+            android:id="@+id/textPositionLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/position_label"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/textPosition"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="P1"
+            android:textColor="@color/text_primary"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace" />
+
+        <!-- Gap Behind Display (BOTTOM) -->
+        <TextView
+            android:id="@+id/textGapBehindLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/gap_behind_label"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/textGapBehind"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+2.345"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:fontFamily="monospace" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/textCurrentTime"
@@ -52,7 +132,7 @@
         android:textSize="120sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/textCountdown"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
         app:layout_constraintStart_toEndOf="@+id/progressBarContainer"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
@@ -66,7 +146,7 @@
         android:textColor="@color/text_primary"
         android:textSize="60sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
         app:layout_constraintStart_toEndOf="@+id/progressBarContainer"
         app:layout_constraintTop_toBottomOf="@+id/textCurrentTime" />
 

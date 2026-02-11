@@ -5,6 +5,9 @@
     <!-- GPS location permission for detecting standstill in pit stops -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- Internet permission for SpeedHive Live Timing API -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"

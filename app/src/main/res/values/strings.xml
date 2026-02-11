@@ -8,4 +8,21 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="select_time">Select Time</string>
+    
+    <!-- SpeedHive strings -->
+    <string name="speedhive_live_timing">SpeedHive Live Timing</string>
+    <string name="speedhive_mode">Timing Mode</string>
+    <string name="speedhive_event">Event</string>
+    <string name="speedhive_session">Session</string>
+    <string name="speedhive_event_id">Event ID</string>
+    <string name="speedhive_session_id">Session ID</string>
+    <string name="speedhive_car_number">Car Number</string>
+    <string name="speedhive_mode_off">Off</string>
+    <string name="speedhive_mode_speedhive">SpeedHive API</string>
+    <string name="speedhive_mode_demo">Demo Mode</string>
+    
+    <!-- Live timing display -->
+    <string name="position_label">POS</string>
+    <string name="gap_ahead_label">AHEAD</string>
+    <string name="gap_behind_label">BEHIND</string>
 </resources>

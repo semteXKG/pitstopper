@@ -12,4 +12,8 @@
     <color name="background_primary">#FF000000</color>
     <color name="text_primary">#FFFFFFFF</color>
     <color name="alert_green">#FF00AA00</color>
+    
+    <!-- SpeedHive gap trend colors -->
+    <color name="gap_positive">#FF00CC00</color>
+    <color name="gap_negative">#FFCC0000</color>
 </resources>

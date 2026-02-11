@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,11 +42,23 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler;
     private Runnable updateTimeRunnable;
     private SimpleDateFormat timeFormat;
+    
+    // SpeedHive Live Timing UI
+    private LinearLayout liveTimingPanel;
+    private TextView textPosition;
+    private TextView textGapAhead;
+    private TextView textGapBehind;
 
     private PitWindowPreferences preferences;
     private PitWindowAlertManager alertManager;
     private StandstillDetector standstillDetector;
     private boolean wasInAlertState = false;
+    
+    // SpeedHive Live Timing
+    private SpeedHiveManager speedHiveManager;
+    private Runnable speedHivePollingRunnable;
+    private LiveTimingData previousTimingData; // For gap trend comparison
+    private static final int SPEEDHIVE_POLL_INTERVAL_MS = 10000; // 10 seconds
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +81,12 @@ public class MainActivity extends AppCompatActivity {
         rootLayout = findViewById(R.id.rootLayout);
         progressBar = findViewById(R.id.progressBar);
         progressBarContainer = findViewById(R.id.progressBarContainer);
+        
+        // Initialize SpeedHive UI elements
+        liveTimingPanel = findViewById(R.id.liveTimingPanel);
+        textPosition = findViewById(R.id.textPosition);
+        textGapAhead = findViewById(R.id.textGapAhead);
+        textGapBehind = findViewById(R.id.textGapBehind);
 
         // Initialize preferences
         preferences = new PitWindowPreferences(this);
@@ -85,6 +104,16 @@ public class MainActivity extends AppCompatActivity {
                 updateTime();
                 // Schedule next update in 1 second
                 handler.postDelayed(this, 1000);
+            }
+        };
+        
+        // Create runnable for SpeedHive polling
+        speedHivePollingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                pollSpeedHive();
+                // Schedule next poll in 10 seconds
+                handler.postDelayed(this, SPEEDHIVE_POLL_INTERVAL_MS);
             }
         };
 
@@ -160,6 +189,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Reset alert state tracking
         wasInAlertState = false;
+        
+        // Initialize SpeedHive based on settings
+        initializeSpeedHive();
 
         // Start updating the clock when activity becomes visible
         updateTime(); // Update immediately
@@ -171,10 +203,19 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         // Stop updating the clock when activity is no longer visible
         handler.removeCallbacks(updateTimeRunnable);
+        
+        // Stop SpeedHive polling
+        handler.removeCallbacks(speedHivePollingRunnable);
 
         // Stop GPS monitoring to save battery
         if (standstillDetector != null) {
             standstillDetector.stopMonitoring();
+        }
+        
+        // Clean up SpeedHive manager
+        if (speedHiveManager != null) {
+            speedHiveManager.shutdown();
+            speedHiveManager = null;
         }
     }
 
@@ -283,6 +324,193 @@ public class MainActivity extends AppCompatActivity {
             ViewGroup.LayoutParams params = progressBar.getLayoutParams();
             params.height = progressHeight;
             progressBar.setLayoutParams(params);
+        }
+    }
+    
+    /**
+     * Initialize SpeedHive manager and UI based on current preferences.
+     */
+    private void initializeSpeedHive() {
+        String mode = preferences.getSpeedHiveMode();
+        
+        if (PitWindowPreferences.SPEEDHIVE_MODE_OFF.equals(mode)) {
+            // Hide live timing panel
+            liveTimingPanel.setVisibility(View.GONE);
+            speedHiveManager = null;
+            previousTimingData = null;
+        } else {
+            // Show live timing panel
+            liveTimingPanel.setVisibility(View.VISIBLE);
+            
+            if (PitWindowPreferences.SPEEDHIVE_MODE_SPEEDHIVE.equals(mode)) {
+                // Create real SpeedHive manager
+                try {
+                    speedHiveManager = new SpeedHiveManager(this);
+                    Log.i(TAG, "SpeedHive API manager initialized");
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to initialize SpeedHive manager", e);
+                    Toast.makeText(this, "SpeedHive config error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    liveTimingPanel.setVisibility(View.GONE);
+                    return;
+                }
+            } else if (PitWindowPreferences.SPEEDHIVE_MODE_DEMO.equals(mode)) {
+                // Create demo SpeedHive manager
+                speedHiveManager = new DemoSpeedHiveManager(this);
+                Log.i(TAG, "Demo SpeedHive manager initialized");
+            }
+            
+            // Start polling if we have a manager
+            if (speedHiveManager != null) {
+                // Reset previous data
+                previousTimingData = null;
+                
+                // Start polling immediately, then every 10 seconds
+                pollSpeedHive();
+                handler.postDelayed(speedHivePollingRunnable, SPEEDHIVE_POLL_INTERVAL_MS);
+            }
+        }
+    }
+    
+    /**
+     * Poll SpeedHive API for updated leaderboard data.
+     */
+    private void pollSpeedHive() {
+        if (speedHiveManager == null) {
+            return;
+        }
+        
+        String eventId = preferences.getSpeedHiveEventId();
+        String sessionId = preferences.getSpeedHiveSessionId();
+        String carNumber = preferences.getSpeedHiveCarNumber();
+        
+        if (eventId.isEmpty() || sessionId.isEmpty() || carNumber.isEmpty()) {
+            Log.w(TAG, "SpeedHive settings incomplete - skipping poll");
+            updateLiveTimingUI(null, "Settings incomplete");
+            return;
+        }
+        
+        Log.d(TAG, "Polling SpeedHive for car #" + carNumber);
+        
+        speedHiveManager.fetchLeaderboard(eventId, sessionId, carNumber, new SpeedHiveManager.LiveTimingCallback() {
+            @Override
+            public void onSuccess(LiveTimingData data) {
+                Log.i(TAG, "SpeedHive data received: " + data.toString());
+                runOnUiThread(() -> updateLiveTimingUI(data, null));
+            }
+            
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "SpeedHive error: " + error);
+                runOnUiThread(() -> updateLiveTimingUI(null, error));
+            }
+        });
+    }
+    
+    /**
+     * Update the live timing UI with new data or error message.
+     * 
+     * @param data New timing data (null if error)
+     * @param error Error message (null if success)
+     */
+    private void updateLiveTimingUI(LiveTimingData data, String error) {
+        if (data != null) {
+            // Update position
+            textPosition.setText(data.getFormattedPosition());
+            
+            // Update gaps with color coding
+            updateGapWithTrend(textGapAhead, data.getGapAhead(), 
+                              previousTimingData != null ? previousTimingData.getGapAhead() : null, true);
+            updateGapWithTrend(textGapBehind, data.getGapBehind(),
+                              previousTimingData != null ? previousTimingData.getGapBehind() : null, false);
+            
+            // Store for next comparison
+            previousTimingData = data;
+            
+        } else {
+            // Show error state
+            textPosition.setText("ERR");
+            textGapAhead.setText(error != null ? "ERROR" : "---");
+            textGapAhead.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            textGapBehind.setText("---");
+            textGapBehind.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        }
+    }
+    
+    /**
+     * Update a gap text view with color coding based on trend.
+     * 
+     * @param textView TextView to update
+     * @param currentGap Current gap value
+     * @param previousGap Previous gap value (for comparison)
+     * @param isGapAhead true if this is gap ahead, false if gap behind
+     */
+    private void updateGapWithTrend(TextView textView, String currentGap, String previousGap, boolean isGapAhead) {
+        textView.setText(currentGap);
+        
+        if (previousGap == null || currentGap.equals(previousGap)) {
+            // No previous data or no change - use white
+            textView.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            return;
+        }
+        
+        // Try to parse gaps as seconds for comparison
+        Double currentSeconds = parseGapToSeconds(currentGap);
+        Double previousSeconds = parseGapToSeconds(previousGap);
+        
+        if (currentSeconds == null || previousSeconds == null) {
+            // Can't compare (probably "LEADER", "LAST", or "X Laps") - use white
+            textView.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            return;
+        }
+        
+        double delta = currentSeconds - previousSeconds;
+        
+        // Apply 0.5 second threshold
+        if (Math.abs(delta) < 0.5) {
+            // Change too small - white
+            textView.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            return;
+        }
+        
+        // Determine if change is favorable
+        boolean isFavorable;
+        if (isGapAhead) {
+            // Gap ahead shrinking is good (catching up)
+            isFavorable = delta < 0;
+        } else {
+            // Gap behind growing is good (pulling away)
+            isFavorable = delta > 0;
+        }
+        
+        // Apply color
+        int color = isFavorable ? R.color.gap_positive : R.color.gap_negative;
+        textView.setTextColor(ContextCompat.getColor(this, color));
+    }
+    
+    /**
+     * Parse a gap string to seconds for trend comparison.
+     * 
+     * @param gap Gap string (e.g., "1.234", "+2.567", "LEADER", "2 Laps")
+     * @return Seconds as Double, or null if not parseable
+     */
+    private Double parseGapToSeconds(String gap) {
+        if (gap == null || gap.isEmpty()) {
+            return null;
+        }
+        
+        // Remove leading + sign if present
+        String cleaned = gap.startsWith("+") ? gap.substring(1) : gap;
+        
+        // Skip special values
+        if (cleaned.equalsIgnoreCase("LEADER") || cleaned.equalsIgnoreCase("LAST") ||
+            cleaned.contains("Lap") || cleaned.contains("lap")) {
+            return null;
+        }
+        
+        try {
+            return Double.parseDouble(cleaned);
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
