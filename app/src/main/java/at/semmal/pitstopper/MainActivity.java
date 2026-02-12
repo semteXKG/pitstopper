@@ -6,6 +6,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.SpannableString;
+import android.text.style.RelativeSizeSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView textCurrentTime;
     private TextView textCountdown;
+    private TextView textEventSession; // NEW: Event/Session display
     private ImageButton buttonSettings;
     private ConstraintLayout rootLayout;
     private View progressBar;
@@ -57,8 +60,15 @@ public class MainActivity extends AppCompatActivity {
     // SpeedHive Live Timing
     private SpeedHiveManager speedHiveManager;
     private Runnable speedHivePollingRunnable;
+    private Runnable sessionCheckRunnable; // NEW: Session change detection
     private LiveTimingData previousTimingData; // For gap trend comparison
     private static final int SPEEDHIVE_POLL_INTERVAL_MS = 10000; // 10 seconds
+    private static final int SESSION_CHECK_INTERVAL_MS = 60000; // 60 seconds
+    
+    // Session tracking for AUTO mode
+    private String currentSessionId = ""; // Currently active session
+    private String currentSessionName = ""; // Currently active session name
+    private String currentEventName = ""; // Currently active event name
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         // Initialize views
         textCurrentTime = findViewById(R.id.textCurrentTime);
         textCountdown = findViewById(R.id.textCountdown);
+        textEventSession = findViewById(R.id.textEventSession); // NEW: Event/Session display
         buttonSettings = findViewById(R.id.buttonSettings);
         rootLayout = findViewById(R.id.rootLayout);
         progressBar = findViewById(R.id.progressBar);
@@ -114,6 +125,16 @@ public class MainActivity extends AppCompatActivity {
                 pollSpeedHive();
                 // Schedule next poll in 10 seconds
                 handler.postDelayed(this, SPEEDHIVE_POLL_INTERVAL_MS);
+            }
+        };
+        
+        // Create runnable for session change detection (AUTO mode only)
+        sessionCheckRunnable = new Runnable() {
+            @Override
+            public void run() {
+                checkForSessionChange();
+                // Schedule next session check in 60 seconds
+                handler.postDelayed(this, SESSION_CHECK_INTERVAL_MS);
             }
         };
 
@@ -204,8 +225,9 @@ public class MainActivity extends AppCompatActivity {
         // Stop updating the clock when activity is no longer visible
         handler.removeCallbacks(updateTimeRunnable);
         
-        // Stop SpeedHive polling
+        // Stop SpeedHive polling and session checking
         handler.removeCallbacks(speedHivePollingRunnable);
+        handler.removeCallbacks(sessionCheckRunnable);
 
         // Stop GPS monitoring to save battery
         if (standstillDetector != null) {
@@ -334,8 +356,9 @@ public class MainActivity extends AppCompatActivity {
         String mode = preferences.getSpeedHiveMode();
         
         if (PitWindowPreferences.SPEEDHIVE_MODE_OFF.equals(mode)) {
-            // Hide live timing panel
+            // Hide live timing panel and event/session display
             liveTimingPanel.setVisibility(View.GONE);
+            textEventSession.setVisibility(View.GONE);
             speedHiveManager = null;
             previousTimingData = null;
         } else {
@@ -351,6 +374,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "Failed to initialize SpeedHive manager", e);
                     Toast.makeText(this, "SpeedHive config error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     liveTimingPanel.setVisibility(View.GONE);
+                    textEventSession.setVisibility(View.GONE);
                     return;
                 }
             } else if (PitWindowPreferences.SPEEDHIVE_MODE_DEMO.equals(mode)) {
@@ -361,12 +385,20 @@ public class MainActivity extends AppCompatActivity {
             
             // Start polling if we have a manager
             if (speedHiveManager != null) {
-                // Reset previous data
+                // Reset previous data and session tracking
                 previousTimingData = null;
+                currentSessionId = "";
+                currentSessionName = "";
+                
+                // Initialize event/session display
+                initializeEventSessionDisplay();
                 
                 // Start polling immediately, then every 10 seconds
                 pollSpeedHive();
                 handler.postDelayed(speedHivePollingRunnable, SPEEDHIVE_POLL_INTERVAL_MS);
+                
+                // Start session change checking (AUTO mode only) after 60 seconds
+                handler.postDelayed(sessionCheckRunnable, SESSION_CHECK_INTERVAL_MS);
             }
         }
     }
@@ -382,15 +414,89 @@ public class MainActivity extends AppCompatActivity {
         String eventId = preferences.getSpeedHiveEventId();
         String sessionId = preferences.getSpeedHiveSessionId();
         String carNumber = preferences.getSpeedHiveCarNumber();
+        String mode = preferences.getSpeedHiveMode();
         
-        if (eventId.isEmpty() || sessionId.isEmpty() || carNumber.isEmpty()) {
+        // For demo mode, we only need car number
+        if (PitWindowPreferences.SPEEDHIVE_MODE_DEMO.equals(mode)) {
+            if (carNumber.isEmpty()) {
+                Log.w(TAG, "Demo mode: car number not set - skipping poll");
+                updateLiveTimingUI(null, "Car number not set");
+                return;
+            }
+            
+            Log.d(TAG, "Demo mode - polling for car #" + carNumber);
+            speedHiveManager.fetchLeaderboard("", "", carNumber, new SpeedHiveManager.LiveTimingCallback() {
+                @Override
+                public void onSuccess(LiveTimingData data) {
+                    runOnUiThread(() -> updateLiveTimingUI(data, null));
+                }
+                
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> updateLiveTimingUI(null, error));
+                }
+            });
+            return;
+        }
+        
+        // For SpeedHive live mode, we need eventId and carNumber
+        if (eventId.isEmpty() || carNumber.isEmpty()) {
             Log.w(TAG, "SpeedHive settings incomplete - skipping poll");
             updateLiveTimingUI(null, "Settings incomplete");
             return;
         }
         
-        Log.d(TAG, "Polling SpeedHive for car #" + carNumber);
-        
+        // Handle AUTO session detection
+        if (PitWindowPreferences.SPEEDHIVE_SESSION_AUTO.equals(sessionId) || sessionId.isEmpty()) {
+            Log.d(TAG, "AUTO session mode - detecting session for car #" + carNumber);
+            autoDetectAndPoll(eventId, carNumber);
+        } else {
+            // Manual session selection
+            Log.d(TAG, "Manual session mode - polling session " + sessionId + " for car #" + carNumber);
+            pollWithSession(eventId, sessionId, carNumber);
+        }
+    }
+    
+    /**
+     * Auto-detect the appropriate session and then poll for data.
+     */
+    private void autoDetectAndPoll(String eventId, String carNumber) {
+        if (speedHiveManager instanceof SpeedHiveManager) {
+            SpeedHiveManager realManager = (SpeedHiveManager) speedHiveManager;
+            realManager.findSessionWithCar(eventId, carNumber, new SpeedHiveManager.AutoSessionCallback() {
+                @Override
+                public void onSuccess(String detectedSessionId, String sessionName) {
+                    Log.i(TAG, "Auto-detected session: " + sessionName + " (" + detectedSessionId + ")");
+                    runOnUiThread(() -> {
+                        // Update session tracking
+                        currentSessionId = detectedSessionId;
+                        currentSessionName = sessionName;
+                        updateEventSessionDisplay();
+                        
+                        // Poll the detected session
+                        pollWithSession(eventId, detectedSessionId, carNumber);
+                    });
+                }
+                
+                @Override
+                public void onError(String error) {
+                    Log.w(TAG, "Auto-detection failed: " + error);
+                    runOnUiThread(() -> updateLiveTimingUI(null, "Auto-detect failed: " + error));
+                }
+            });
+        } else {
+            // Demo mode doesn't need session detection
+            currentSessionId = "DEMO";
+            currentSessionName = "Practice Session";
+            updateEventSessionDisplay();
+            pollWithSession(eventId, "DEMO", carNumber);
+        }
+    }
+    
+    /**
+     * Poll SpeedHive with a specific session ID.
+     */
+    private void pollWithSession(String eventId, String sessionId, String carNumber) {
         speedHiveManager.fetchLeaderboard(eventId, sessionId, carNumber, new SpeedHiveManager.LiveTimingCallback() {
             @Override
             public void onSuccess(LiveTimingData data) {
@@ -414,8 +520,20 @@ public class MainActivity extends AppCompatActivity {
      */
     private void updateLiveTimingUI(LiveTimingData data, String error) {
         if (data != null) {
-            // Update position
-            textPosition.setText(data.getFormattedPosition());
+            // Update position with total count (e.g., "P3/8") - make total part smaller
+            String positionText = data.getFormattedPositionWithTotal();
+            int slashIndex = positionText.indexOf('/');
+            
+            if (slashIndex != -1) {
+                // Create spannable string with smaller text for total part
+                SpannableString spannablePosition = new SpannableString(positionText);
+                // Make the "/8" part 60% of normal size
+                spannablePosition.setSpan(new RelativeSizeSpan(0.6f), slashIndex, positionText.length(), 0);
+                textPosition.setText(spannablePosition);
+            } else {
+                // Fallback to regular text if no slash found
+                textPosition.setText(positionText);
+            }
             
             // Update gaps with color coding
             updateGapWithTrend(textGapAhead, data.getGapAhead(), 
@@ -512,6 +630,127 @@ public class MainActivity extends AppCompatActivity {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    /**
+     * Initialize the event/session display based on current settings.
+     */
+    private void initializeEventSessionDisplay() {
+        String eventName = preferences.getSpeedHiveEventName();
+        String sessionId = preferences.getSpeedHiveSessionId();
+        String sessionName = preferences.getSpeedHiveSessionName();
+        String mode = preferences.getSpeedHiveMode();
+        
+        if (PitWindowPreferences.SPEEDHIVE_MODE_DEMO.equals(mode)) {
+            // Demo mode
+            currentEventName = "Demo Race";
+            currentSessionName = "Practice Session";
+            updateEventSessionDisplay();
+        } else if (!eventName.isEmpty()) {
+            // Real SpeedHive mode
+            currentEventName = eventName;
+            if (PitWindowPreferences.SPEEDHIVE_SESSION_AUTO.equals(sessionId)) {
+                currentSessionName = "AUTO"; // Will be updated when session is detected
+            } else {
+                currentSessionName = sessionName.isEmpty() ? "Unknown Session" : sessionName;
+            }
+            updateEventSessionDisplay();
+        } else {
+            // No event configured yet
+            textEventSession.setVisibility(View.GONE);
+        }
+    }
+    
+    /**
+     * Update the event/session display text.
+     */
+    private void updateEventSessionDisplay() {
+        if (currentEventName.isEmpty()) {
+            textEventSession.setVisibility(View.GONE);
+            return;
+        }
+        
+        String displayText;
+        if (currentSessionName.isEmpty()) {
+            displayText = currentEventName;
+        } else {
+            displayText = currentEventName + " - " + currentSessionName;
+        }
+        
+        textEventSession.setText(displayText);
+        textEventSession.setVisibility(View.VISIBLE);
+        
+        Log.d(TAG, "Updated event/session display: " + displayText);
+    }
+    
+    /**
+     * Check for session changes in AUTO mode (runs every 60 seconds).
+     * Detects if we should switch to a different session (e.g., qualifying → race).
+     */
+    private void checkForSessionChange() {
+        String mode = preferences.getSpeedHiveMode();
+        String sessionId = preferences.getSpeedHiveSessionId();
+        
+        // Don't check for session changes in demo mode
+        if (PitWindowPreferences.SPEEDHIVE_MODE_DEMO.equals(mode)) {
+            return;
+        }
+        
+        // Only check for changes in AUTO mode
+        if (!PitWindowPreferences.SPEEDHIVE_SESSION_AUTO.equals(sessionId)) {
+            return;
+        }
+        
+        String eventId = preferences.getSpeedHiveEventId();
+        String carNumber = preferences.getSpeedHiveCarNumber();
+        
+        if (eventId.isEmpty() || carNumber.isEmpty() || !(speedHiveManager instanceof SpeedHiveManager)) {
+            return;
+        }
+        
+        Log.d(TAG, "Checking for session changes (AUTO mode) for car #" + carNumber);
+        
+        SpeedHiveManager realManager = (SpeedHiveManager) speedHiveManager;
+        realManager.findSessionWithCar(eventId, carNumber, new SpeedHiveManager.AutoSessionCallback() {
+            @Override
+            public void onSuccess(String detectedSessionId, String sessionName) {
+                runOnUiThread(() -> handleSessionChangeCheck(detectedSessionId, sessionName));
+            }
+            
+            @Override
+            public void onError(String error) {
+                Log.w(TAG, "Session change check failed: " + error);
+                // Don't update UI for session check errors - keep current session
+            }
+        });
+    }
+    
+    /**
+     * Handle the result of a session change check.
+     * @param detectedSessionId The newly detected optimal session ID
+     * @param detectedSessionName The newly detected session name
+     */
+    private void handleSessionChangeCheck(String detectedSessionId, String detectedSessionName) {
+        // Compare with current session
+        if (detectedSessionId.equals(currentSessionId)) {
+            // Same session - no change needed
+            Log.d(TAG, "Session unchanged: " + currentSessionName);
+            return;
+        }
+        
+        // Different session detected
+        Log.i(TAG, "Session change detected: " + currentSessionName + " → " + detectedSessionName);
+        
+        // Update tracking variables
+        currentSessionId = detectedSessionId;
+        currentSessionName = detectedSessionName;
+        
+        // Update display
+        updateEventSessionDisplay();
+        
+        // Note: We don't need to update preferences or restart polling - 
+        // the polling logic will automatically use the new detected session
+        Toast.makeText(this, "Switched to session: " + detectedSessionName, Toast.LENGTH_LONG).show();
     }
 
     private void hideSystemUI() {

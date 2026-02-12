@@ -40,6 +40,9 @@ public class PitWindowPreferences {
     public static final String SPEEDHIVE_MODE_OFF = "off";
     public static final String SPEEDHIVE_MODE_SPEEDHIVE = "speedhive";
     public static final String SPEEDHIVE_MODE_DEMO = "demo";
+    
+    // Special session ID for AUTO mode
+    public static final String SPEEDHIVE_SESSION_AUTO = "AUTO";
 
     private final SharedPreferences prefs;
 

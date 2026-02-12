@@ -191,7 +191,7 @@ public class DemoSpeedHiveManager extends SpeedHiveManager {
         } else {
             DemoCar carBehind = cars.get(position); // position-1 index, then +1 for car behind
             double gapSeconds = carBehind.totalTime - ourCar.totalTime;
-            gapBehind = "+" + formatGap(gapSeconds);
+            gapBehind = formatGap(gapSeconds);
         }
         
         return new LiveTimingData(

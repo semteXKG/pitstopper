@@ -476,6 +476,128 @@ public class SpeedHiveManager {
     }
 
     /**
+     * Callback interface for auto-detecting sessions containing a specific car.
+     */
+    public interface AutoSessionCallback {
+        void onSuccess(String sessionId, String sessionName);
+        void onError(String error);
+    }
+    
+    /**
+     * Automatically find the latest live session containing the specified car number.
+     * Checks all sessions for an event and finds the most recent one with live data
+     * that contains the given car number.
+     * 
+     * @param eventId SpeedHive event ID
+     * @param carNumber Car number to search for
+     * @param callback Callback to receive the session ID or error
+     */
+    public void findSessionWithCar(String eventId, String carNumber, AutoSessionCallback callback) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            callback.onError("Event ID is required");
+            return;
+        }
+        
+        if (carNumber == null || carNumber.trim().isEmpty()) {
+            callback.onError("Car number is required");
+            return;
+        }
+        
+        Log.d(TAG, "Auto-detecting session for car #" + carNumber + " in event " + eventId);
+        
+        // First, fetch all sessions for the event
+        fetchSessions(eventId, true, new SessionsCallback() {
+            @Override
+            public void onSuccess(List<SpeedHiveSession> sessions) {
+                // Filter to only active/live sessions and search them
+                searchSessionsForCar(eventId, carNumber, sessions, callback);
+            }
+            
+            @Override
+            public void onError(String error) {
+                callback.onError("Failed to fetch sessions: " + error);
+            }
+        });
+    }
+    
+    /**
+     * Search through sessions to find one containing the specified car.
+     * Prioritizes active sessions and checks them in reverse order (newest first).
+     */
+    private void searchSessionsForCar(String eventId, String carNumber, List<SpeedHiveSession> sessions, AutoSessionCallback callback) {
+        executor.execute(() -> {
+            // Filter to active sessions first, then all sessions as fallback
+            List<SpeedHiveSession> activeSessions = new ArrayList<>();
+            for (SpeedHiveSession session : sessions) {
+                if (session.isActive()) {
+                    activeSessions.add(session);
+                }
+            }
+            
+            // Try active sessions first (most likely to have current data)
+            List<SpeedHiveSession> sessionsToCheck = activeSessions.isEmpty() ? sessions : activeSessions;
+            
+            Log.d(TAG, "Checking " + sessionsToCheck.size() + " sessions for car #" + carNumber);
+            
+            for (SpeedHiveSession session : sessionsToCheck) {
+                try {
+                    // Check if this session contains our car
+                    if (sessionContainsCar(eventId, session.getId(), carNumber)) {
+                        Log.i(TAG, "Found car #" + carNumber + " in session: " + session.getRunName());
+                        callback.onSuccess(session.getId(), session.getRunName());
+                        return;
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "Error checking session " + session.getId() + " for car #" + carNumber, e);
+                    // Continue checking other sessions
+                }
+            }
+            
+            // Car not found in any session
+            callback.onError("Car #" + carNumber + " not found in any available session");
+        });
+    }
+    
+    /**
+     * Check if a specific session contains the given car number.
+     * @param eventId SpeedHive event ID
+     * @param sessionId SpeedHive session ID
+     * @param carNumber Car number to search for
+     * @return true if session contains the car, false otherwise
+     */
+    private boolean sessionContainsCar(String eventId, String sessionId, String carNumber) throws Exception {
+        String endpoint = String.format("/events/%s/sessions/%s/data", eventId.trim(), sessionId.trim());
+        String urlString = config.buildUrl(endpoint);
+        
+        Log.d(TAG, "Checking session " + sessionId + " for car #" + carNumber);
+        
+        HttpURLConnection connection = createConnection(urlString);
+        int responseCode = connection.getResponseCode();
+        
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            String responseBody = readResponse(connection);
+            connection.disconnect();
+            
+            // Parse response and look for our car number
+            JSONObject root = new JSONObject(responseBody);
+            JSONArray leaderboard = root.getJSONArray("l");
+            
+            for (int i = 0; i < leaderboard.length(); i++) {
+                JSONObject competitor = leaderboard.getJSONObject(i);
+                String competitorNumber = competitor.optString("no", "");
+                if (carNumber.equals(competitorNumber)) {
+                    return true;
+                }
+            }
+        } else {
+            connection.disconnect();
+            Log.w(TAG, "Session " + sessionId + " returned HTTP " + responseCode);
+        }
+        
+        return false;
+    }
+
+    /**
      * Clean up resources when no longer needed.
      */
     public void shutdown() {

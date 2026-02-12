@@ -93,6 +93,47 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 
 ---
 
+## Changelog
+
+### Version 1.0.3 (February 2026)
+
+#### 🚀 Major Features
+
+**Intelligent SpeedHive Integration**
+- **AUTO Session Detection**: Automatically finds the right session containing your car number - no more manual session selection
+- **Dynamic Session Switching**: Automatically transitions between sessions (e.g., qualifying → race) every 60 seconds
+- **Event & Session Display**: Shows current event and session name at the top of the main screen (e.g., "Hagenberg Race - Training")
+
+**Enhanced Demo Mode**
+- **Fixed Critical Bugs**: Demo mode now works correctly (previously showed errors)
+- **Car Selection Dropdown**: Choose from 8 realistic demo cars with driver names (#88 JOHNSON, #23 RACER-X, etc.)
+- **Realistic Race Simulation**: 8-car race with evolving positions, lap time variations, and proper gap calculations
+
+**Improved Live Timing Display**
+- **Position with Total**: Shows your position relative to field size (P3/8 format)
+- **Smart Text Sizing**: Total car count displays smaller to prevent layout issues in large races
+- **Cleaner Gap Formatting**: Removed unnecessary + signs from gap behind values
+
+#### 🔧 Technical Improvements
+
+- **Simplified Settings**: Manual car number entry replaces complex dropdown for SpeedHive live mode
+- **Mode-Specific Validation**: Proper validation logic for each SpeedHive mode (Off/Live/Demo)
+- **Thread-Safe Session Tracking**: Background session detection with main thread UI updates
+- **Constraint Barrier Layouts**: Dynamic field visibility without layout issues
+- **Enhanced Error Handling**: Graceful degradation when session detection fails
+- **All 42 Unit Tests Passing**: Comprehensive test coverage maintained
+
+### Version 1.0.2 (February 2026)
+- Scrollable settings screen for better keyboard handling
+
+### Version 1.0.1 (February 2026)
+- Fixed flash sequence to start with green for better visibility
+
+### Version 1.0.0 (February 2026)
+- Initial release with pit window timing, GPS standstill detection, and visual alerts
+
+---
+
 **Built by racers, for racers.** 🏎️
 
 *Get to the pits on time, every time.*

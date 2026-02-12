@@ -123,6 +123,20 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/textEventSession"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="monospace"
+        android:text=""
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
+        app:layout_constraintStart_toEndOf="@+id/progressBarContainer"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
         android:id="@+id/textCurrentTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -134,7 +148,7 @@
         app:layout_constraintBottom_toTopOf="@+id/textCountdown"
         app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
         app:layout_constraintStart_toEndOf="@+id/progressBarContainer"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textEventSession"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView

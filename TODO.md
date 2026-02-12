@@ -299,6 +299,17 @@ lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtim
 - ✅ **Car Number Lookup** — Enter your car number, we find your data
 - ✅ **Thread-Safe Design** — Background network, main thread UI updates
 
+### NEW: Intelligent Session Detection (February 12, 2026 - v1.0.3):
+- ✅ **AUTO Session Detection** — Automatically finds session containing your car number
+- ✅ **Dynamic Session Switching** — Auto-transitions between sessions (qualifying → race)
+- ✅ **Event/Session Display** — Shows "Event Name - Session Name" on main screen
+- ✅ **Simplified Settings** — Manual car number entry replaces complex dropdown
+- ✅ **Demo Mode Fix** — Critical bug fix - demo mode now works correctly
+- ✅ **Demo Car Selection** — Dropdown with 8 cars + driver names
+- ✅ **Position with Total** — Shows P3/8 format with smart text sizing
+- ✅ **60-Second Session Monitoring** — Separate from 10s leaderboard polling
+- ✅ **Mode-Specific Validation** — Proper handling for Off/Live/Demo modes
+
 ### SpeedHive Technical Implementation:
 - **SpeedHiveConfig.java** — Loads API credentials from assets
 - **SpeedHiveManager.java** — HTTP client for real SpeedHive API

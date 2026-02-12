@@ -99,6 +99,14 @@ public class LiveTimingData {
         return "P" + position;
     }
     
+    /**
+     * Format position with total count as "P1/8", "P2/8", etc.
+     * @return Formatted position string with total
+     */
+    public String getFormattedPositionWithTotal() {
+        return "P" + position + "/" + totalCompetitors;
+    }
+    
     @Override
     public String toString() {
         return String.format("LiveTimingData{pos=%d/%d, car=%s, driver='%s', ahead='%s', behind='%s'}",

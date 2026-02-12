@@ -1,5 +1,40 @@
 # PitStopper Version History
 
+## Version 1.0.3 (February 12, 2026)
+
+### 🚀 Major Features
+
+**Intelligent SpeedHive Integration**
+- **AUTO Session Detection**: Automatically finds the right session containing your car number
+- **Dynamic Session Switching**: Auto-transitions between sessions (qualifying → race) every 60 seconds
+- **Event & Session Display**: Shows "Event Name - Session Name" on main screen
+
+**Enhanced Demo Mode**
+- **Critical Bug Fix**: Demo mode now works correctly (previously showed "ERR" and "ERROR")
+- **Car Selection Dropdown**: 8 demo cars with driver names (#88 JOHNSON, #23 RACER-X, etc.)
+- **Realistic Simulation**: 8-car race with evolving positions and gap calculations
+
+**Improved Live Timing Display**
+- **Position with Total**: P3/8 format shows position relative to field size
+- **Smart Text Sizing**: Total count smaller (60%) to prevent layout issues in large races
+- **Cleaner Gaps**: Removed unnecessary + signs from gap behind values
+
+### 🔧 Technical Improvements
+
+- Simplified settings with manual car number entry for SpeedHive live mode
+- Mode-specific validation (Off/Live/Demo handled separately)
+- Thread-safe session tracking with UI updates via runOnUiThread()
+- Constraint barrier layouts for dynamic field visibility
+- SpannableString with RelativeSizeSpan for mixed text sizes
+- Enhanced error handling and graceful degradation
+- All 42 unit tests passing
+
+### Files
+
+- `pitstopper-1.0.3.apk` - Signed release APK
+
+---
+
 ## Version 1.0.2 (February 9, 2026)
 
 ### Changes

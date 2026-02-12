@@ -34,16 +34,16 @@ public class SettingsActivity extends AppCompatActivity {
     // SpeedHive UI elements
     private Spinner spinnerSpeedHiveMode;
     private TextView labelEventId, labelSessionId, labelCarNumber;
-    private Spinner spinnerEventId, spinnerSessionId, spinnerCarNumber;
-    private FrameLayout frameEventSpinner, frameSessionSpinner, frameCarSpinner;
-    private ProgressBar progressEvents, progressSessions, progressCars;
-    private EditText editCarNumber; // For demo mode
+    private Spinner spinnerEventId, spinnerSessionId;
+    private FrameLayout frameEventSpinner, frameSessionSpinner;
+    private ProgressBar progressEvents, progressSessions;
+    private EditText editCarNumber; // For SpeedHive live mode
+    private Spinner spinnerDemoCar; // For demo mode car selection
 
     // SpeedHive data
     private SpeedHiveManager speedHiveManager;
     private List<SpeedHiveEvent> loadedEvents;
     private List<SpeedHiveSession> loadedSessions;
-    private List<SpeedHiveCar> loadedCars;
     private String savedEventId;
     private String savedSessionId;
     private String savedCarNumber;
@@ -83,10 +83,8 @@ public class SettingsActivity extends AppCompatActivity {
         frameSessionSpinner = findViewById(R.id.frameSessionSpinner);
         progressSessions = findViewById(R.id.progressSessions);
         labelCarNumber = findViewById(R.id.labelCarNumber);
-        spinnerCarNumber = findViewById(R.id.spinnerCarNumber);
-        frameCarSpinner = findViewById(R.id.frameCarSpinner);
-        progressCars = findViewById(R.id.progressCars);
         editCarNumber = findViewById(R.id.editCarNumber);
+        spinnerDemoCar = findViewById(R.id.spinnerDemoCar);
 
         // Store saved IDs for pre-selection after data loads
         savedEventId = preferences.getSpeedHiveEventId();
@@ -102,6 +100,7 @@ public class SettingsActivity extends AppCompatActivity {
         // Set up event and session spinners
         setupEventSpinner();
         setupSessionSpinner();
+        setupDemoCarSpinner();
         
         // Load SpeedHive settings AFTER spinners are set up
         loadSpeedHiveSettings();
@@ -159,7 +158,7 @@ public class SettingsActivity extends AppCompatActivity {
         editPitWindowOpens.setText(String.valueOf(preferences.getPitWindowOpens()));
         editPitWindowDuration.setText(String.valueOf(preferences.getPitWindowDuration()));
         
-        // Load car number for demo mode
+        // Load car number for SpeedHive live mode - demo mode uses spinner
         editCarNumber.setText(preferences.getSpeedHiveCarNumber());
     }
     
@@ -243,29 +242,26 @@ public class SettingsActivity extends AppCompatActivity {
             labelSessionId.setVisibility(View.GONE);
             frameSessionSpinner.setVisibility(View.GONE);
             labelCarNumber.setVisibility(View.GONE);
-            frameCarSpinner.setVisibility(View.GONE);
             editCarNumber.setVisibility(View.GONE);
+            spinnerDemoCar.setVisibility(View.GONE);
         } else if (modeSelection == 1) {
-            // SpeedHive mode - show all fields with spinner for car
+            // SpeedHive mode - show all fields with EditText for car
             labelEventId.setVisibility(View.VISIBLE);
             frameEventSpinner.setVisibility(View.VISIBLE);
             labelSessionId.setVisibility(View.VISIBLE);
             frameSessionSpinner.setVisibility(View.VISIBLE);
             labelCarNumber.setVisibility(View.VISIBLE);
-            frameCarSpinner.setVisibility(View.VISIBLE);
-            editCarNumber.setVisibility(View.GONE);
+            editCarNumber.setVisibility(View.VISIBLE);
+            spinnerDemoCar.setVisibility(View.GONE);
         } else if (modeSelection == 2) {
-            // Demo mode - show only car number with Spinner (demo data)
+            // Demo mode - hide event/session, show demo car selection
             labelEventId.setVisibility(View.GONE);
             frameEventSpinner.setVisibility(View.GONE);
             labelSessionId.setVisibility(View.GONE);
             frameSessionSpinner.setVisibility(View.GONE);
             labelCarNumber.setVisibility(View.VISIBLE);
-            frameCarSpinner.setVisibility(View.VISIBLE);
             editCarNumber.setVisibility(View.GONE);
-            
-            // Load demo cars
-            loadDemoCars();
+            spinnerDemoCar.setVisibility(View.VISIBLE);
         }
     }
 
@@ -347,22 +343,20 @@ public class SettingsActivity extends AppCompatActivity {
                     SessionSpinnerAdapter adapter = new SessionSpinnerAdapter(SettingsActivity.this, sessions);
                     spinnerSessionId.setAdapter(adapter);
 
-                    // Pre-select saved session
-                    int selectedSessionIndex = -1;
-                    for (int i = 0; i < sessions.size(); i++) {
-                        if (sessions.get(i).getId().equals(savedSessionId)) {
-                            spinnerSessionId.setSelection(i);
-                            selectedSessionIndex = i;
-                            break;
+                    // Pre-select saved session (AUTO is position 0, regular sessions start at 1)
+                    if (PitWindowPreferences.SPEEDHIVE_SESSION_AUTO.equals(savedSessionId) || savedSessionId.isEmpty()) {
+                        spinnerSessionId.setSelection(0); // AUTO
+                    } else {
+                        boolean found = false;
+                        for (int i = 0; i < sessions.size(); i++) {
+                            if (sessions.get(i).getId().equals(savedSessionId)) {
+                                spinnerSessionId.setSelection(i + 1); // +1 because AUTO is at position 0
+                                found = true;
+                                break;
+                            }
                         }
-                    }
-                    
-                    // If we found and selected a saved session, load its cars
-                    if (selectedSessionIndex >= 0 && loadedEvents != null) {
-                        SpeedHiveEvent selectedEvent = getSelectedEvent();
-                        if (selectedEvent != null) {
-                            SpeedHiveSession selectedSession = sessions.get(selectedSessionIndex);
-                            loadCars(selectedEvent.getId(), selectedSession.getId());
+                        if (!found) {
+                            spinnerSessionId.setSelection(0); // Default to AUTO if saved session not found
                         }
                     }
                 });
@@ -384,13 +378,8 @@ public class SettingsActivity extends AppCompatActivity {
         spinnerSessionId.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (loadedSessions != null && position < loadedSessions.size()) {
-                    SpeedHiveSession session = loadedSessions.get(position);
-                    SpeedHiveEvent selectedEvent = getSelectedEvent();
-                    if (selectedEvent != null) {
-                        loadCars(selectedEvent.getId(), session.getId());
-                    }
-                }
+                // Session selection changed - no longer need to load cars
+                // Car number is now manually entered via EditText
             }
 
             @Override
@@ -398,6 +387,34 @@ public class SettingsActivity extends AppCompatActivity {
                 // Do nothing
             }
         });
+    }
+
+    private void setupDemoCarSpinner() {
+        // Create demo car list with car number and driver name
+        List<String> demoCars = new ArrayList<>();
+        demoCars.add("#88 - JOHNSON");
+        demoCars.add("#23 - RACER-X");
+        demoCars.add("#77 - STEALTH");
+        demoCars.add("#42 - MARTINEZ");
+        demoCars.add("#15 - SPEEDSTER");
+        demoCars.add("#99 - PHANTOM");
+        demoCars.add("#7 - ACE");
+        demoCars.add("#33 - VIPER");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, demoCars);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDemoCar.setAdapter(adapter);
+
+        // Pre-select based on saved car number
+        String savedCar = preferences.getSpeedHiveCarNumber();
+        if (!savedCar.isEmpty()) {
+            for (int i = 0; i < demoCars.size(); i++) {
+                if (demoCars.get(i).startsWith("#" + savedCar + " ")) {
+                    spinnerDemoCar.setSelection(i);
+                    break;
+                }
+            }
+        }
     }
 
     private SpeedHiveEvent getSelectedEvent() {
@@ -408,68 +425,6 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
         return null;
-    }
-
-    private void loadCars(String eventId, String sessionId) {
-        progressCars.setVisibility(View.VISIBLE);
-        spinnerCarNumber.setVisibility(View.INVISIBLE);
-
-        getSpeedHiveManager().fetchCars(eventId, sessionId, new SpeedHiveManager.CarsCallback() {
-            @Override
-            public void onSuccess(List<SpeedHiveCar> cars) {
-                runOnUiThread(() -> {
-                    loadedCars = cars;
-                    progressCars.setVisibility(View.GONE);
-                    spinnerCarNumber.setVisibility(View.VISIBLE);
-
-                    CarSpinnerAdapter adapter = new CarSpinnerAdapter(SettingsActivity.this, cars);
-                    spinnerCarNumber.setAdapter(adapter);
-
-                    // Pre-select saved car
-                    for (int i = 0; i < cars.size(); i++) {
-                        if (cars.get(i).getNumber().equals(savedCarNumber)) {
-                            spinnerCarNumber.setSelection(i);
-                            break;
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String error) {
-                runOnUiThread(() -> {
-                    progressCars.setVisibility(View.GONE);
-                    spinnerCarNumber.setVisibility(View.VISIBLE);
-                    Log.e(TAG, "Failed to load cars: " + error);
-                    Toast.makeText(SettingsActivity.this, "Failed to load cars: " + error, Toast.LENGTH_LONG).show();
-                });
-            }
-        });
-    }
-
-    private void loadDemoCars() {
-        // Use the same demo car data as the actual simulator
-        List<SpeedHiveCar> demoCars = new ArrayList<>();
-        
-        // These are the actual cars from DemoSpeedHiveManager
-        String[] carNumbers = {"88", "23", "77", "42", "15", "99", "7", "33"};
-        String[] driverNames = {"JOHNSON", "RACER-X", "STEALTH", "MARTINEZ", "SPEEDSTER", "PHANTOM", "ACE", "VIPER"};
-        
-        for (int i = 0; i < carNumbers.length; i++) {
-            demoCars.add(new SpeedHiveCar(carNumbers[i], driverNames[i]));
-        }
-        
-        loadedCars = demoCars;
-        CarSpinnerAdapter adapter = new CarSpinnerAdapter(this, demoCars);
-        spinnerCarNumber.setAdapter(adapter);
-        
-        // Pre-select saved car number
-        for (int i = 0; i < demoCars.size(); i++) {
-            if (demoCars.get(i).getNumber().equals(savedCarNumber)) {
-                spinnerCarNumber.setSelection(i);
-                break;
-            }
-        }
     }
 
     private void saveSettings() {
@@ -526,7 +481,34 @@ public class SettingsActivity extends AppCompatActivity {
         String carName = "";
 
         if (modeSelection == 1) {
-            // SpeedHive mode - get from spinners
+            // SpeedHive mode - validate car number from EditText
+            carNumber = editCarNumber.getText().toString().trim();
+            if (carNumber.isEmpty()) {
+                Toast.makeText(this, "Please enter a car number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Validate numeric input
+            try {
+                Integer.parseInt(carNumber);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Car number must be numeric", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } else if (modeSelection == 2) {
+            // Demo mode - get car number from spinner selection
+            if (spinnerDemoCar.getSelectedItemPosition() >= 0) {
+                String selectedCar = (String) spinnerDemoCar.getSelectedItem();
+                // Extract car number from format "#88 - JOHNSON"
+                carNumber = selectedCar.split(" ")[0].substring(1); // Remove "#" prefix
+            } else {
+                Toast.makeText(this, "Please select a car", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        if (modeSelection == 1) {
+            // SpeedHive mode - get from spinners and EditText
             // Get selected event
             int eventPos = spinnerEventId.getSelectedItemPosition();
             if (loadedEvents != null && eventPos >= 0 && eventPos < loadedEvents.size()) {
@@ -537,28 +519,19 @@ public class SettingsActivity extends AppCompatActivity {
 
             // Get selected session
             int sessionPos = spinnerSessionId.getSelectedItemPosition();
-            if (loadedSessions != null && sessionPos >= 0 && sessionPos < loadedSessions.size()) {
-                SpeedHiveSession session = loadedSessions.get(sessionPos);
+            if (sessionPos == 0) {
+                // AUTO selected
+                sessionId = PitWindowPreferences.SPEEDHIVE_SESSION_AUTO;
+                sessionName = "AUTO";
+            } else if (loadedSessions != null && sessionPos - 1 >= 0 && sessionPos - 1 < loadedSessions.size()) {
+                SpeedHiveSession session = loadedSessions.get(sessionPos - 1);
                 sessionId = session.getId();
                 sessionName = session.getDisplayName();
             }
 
-            // Get selected car from spinner
-            int carPos = spinnerCarNumber.getSelectedItemPosition();
-            if (loadedCars != null && carPos >= 0 && carPos < loadedCars.size()) {
-                SpeedHiveCar car = loadedCars.get(carPos);
-                carNumber = car.getNumber();
-                carName = car.getDriverName();
-            }
-        } else if (modeSelection == 2) {
-            // Demo mode - get car number from spinner (demo data)
-            int carPos = spinnerCarNumber.getSelectedItemPosition();
-            if (loadedCars != null && carPos >= 0 && carPos < loadedCars.size()) {
-                SpeedHiveCar car = loadedCars.get(carPos);
-                carNumber = car.getNumber();
-                carName = car.getDriverName();
-            }
+            carName = ""; // Not needed since we're entering manually
         }
+        // For demo mode, no additional processing needed - carNumber is already set
 
         preferences.saveAllSpeedHive(mode, eventId, eventName, sessionId, sessionName, carNumber, carName);
     }

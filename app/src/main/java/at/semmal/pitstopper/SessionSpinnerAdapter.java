@@ -23,6 +23,22 @@ public class SessionSpinnerAdapter extends ArrayAdapter<SpeedHiveSession> {
         this.inflater = LayoutInflater.from(context);
         setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     }
+    
+    @Override
+    public int getCount() {
+        // Add 1 for AUTO option
+        return sessions.size() + 1;
+    }
+    
+    @Override
+    public SpeedHiveSession getItem(int position) {
+        if (position == 0) {
+            // Return a special AUTO session object
+            return new SpeedHiveSession(PitWindowPreferences.SPEEDHIVE_SESSION_AUTO, "", "AUTO", "", 
+                                       0, "", "", "", 0, false);
+        }
+        return sessions.get(position - 1);
+    }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -30,22 +46,34 @@ public class SessionSpinnerAdapter extends ArrayAdapter<SpeedHiveSession> {
         View view = inflater.inflate(android.R.layout.simple_spinner_item, parent, false);
         TextView textView = view.findViewById(android.R.id.text1);
         
-        SpeedHiveSession session = sessions.get(position);
-        String displayText = session.getDisplayName();
-        if (session.isActive()) {
-            displayText = "🔴 " + displayText;
+        if (position == 0) {
+            textView.setText("AUTO");
+        } else {
+            SpeedHiveSession session = sessions.get(position - 1);
+            String displayText = session.getDisplayName();
+            if (session.isActive()) {
+                displayText = "🔴 " + displayText;
+            }
+            textView.setText(displayText);
         }
-        textView.setText(displayText);
         
         return view;
     }
 
     @Override
     public View getDropDownView(int position, View convertView, ViewGroup parent) {
-        // Dropdown view - detailed layout
+        if (position == 0) {
+            // AUTO option - use simple layout
+            View view = inflater.inflate(android.R.layout.simple_spinner_dropdown_item, parent, false);
+            TextView textView = view.findViewById(android.R.id.text1);
+            textView.setText("AUTO (detect latest session with car)");
+            return view;
+        }
+        
+        // Dropdown view - detailed layout for regular sessions
         View view = inflater.inflate(R.layout.spinner_session_item, parent, false);
         
-        SpeedHiveSession session = sessions.get(position);
+        SpeedHiveSession session = sessions.get(position - 1);
 
         TextView nameText = view.findViewById(R.id.textSessionName);
         TextView infoText = view.findViewById(R.id.textSessionInfo);

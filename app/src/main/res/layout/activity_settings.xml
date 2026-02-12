@@ -229,33 +229,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/frameSessionSpinner" />
 
-    <FrameLayout
-        android:id="@+id/frameCarSpinner"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/labelCarNumber">
-
-        <Spinner
-            android:id="@+id/spinnerCarNumber"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:background="@color/white"
-            android:padding="16dp" />
-
-        <ProgressBar
-            android:id="@+id/progressCars"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
-    </FrameLayout>
-
-    <!-- Car Number EditText for Demo Mode -->
+    <!-- Car Number EditText - used for SpeedHive live mode -->
     <EditText
         android:id="@+id/editCarNumber"
         android:layout_width="0dp"
@@ -263,7 +237,7 @@
         android:layout_marginTop="8dp"
         android:background="@color/white"
         android:hint="88"
-        android:inputType="text"
+        android:inputType="number"
         android:minHeight="56dp"
         android:padding="16dp"
         android:textColor="@color/black"
@@ -275,6 +249,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/labelCarNumber" />
 
+    <!-- Demo Car Selection Spinner - used for demo mode -->
+    <Spinner
+        android:id="@+id/spinnerDemoCar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:minHeight="56dp"
+        android:padding="16dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelCarNumber" />
+
+    <!-- Barrier to handle dynamic constraint for buttons based on visible input field -->
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrierCarInput"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="editCarNumber,spinnerDemoCar" />
+
     <LinearLayout
         android:id="@+id/buttonLayout"
         android:layout_width="0dp"
@@ -283,7 +279,7 @@
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/editCarNumber">
+        app:layout_constraintTop_toBottomOf="@id/barrierCarInput">
 
         <Button
             android:id="@+id/buttonCancel"
