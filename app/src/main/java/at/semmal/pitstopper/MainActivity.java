@@ -563,7 +563,9 @@ public class MainActivity extends AppCompatActivity {
      * @param isGapAhead true if this is gap ahead, false if gap behind
      */
     private void updateGapWithTrend(TextView textView, String currentGap, String previousGap, boolean isGapAhead) {
-        textView.setText(currentGap);
+        // Format gap for display (1 decimal place)
+        String displayGap = formatGapForDisplay(currentGap);
+        textView.setText(displayGap);
         
         if (previousGap == null || currentGap.equals(previousGap)) {
             // No previous data or no change - use white
@@ -629,6 +631,38 @@ public class MainActivity extends AppCompatActivity {
             return Double.parseDouble(cleaned);
         } catch (NumberFormatException e) {
             return null;
+        }
+    }
+    
+    /**
+     * Format a gap value for display (1 decimal place).
+     * Preserves special values like LEADER, LAST, and lap counts.
+     * 
+     * @param gap Raw gap string from API or demo
+     * @return Formatted gap string (e.g., "1.234" → "1.2")
+     */
+    private String formatGapForDisplay(String gap) {
+        if (gap == null || gap.isEmpty()) {
+            return gap;
+        }
+        
+        // Preserve special values
+        if (gap.equalsIgnoreCase("LEADER") || gap.equalsIgnoreCase("LAST") ||
+            gap.contains("Lap") || gap.contains("lap") ||
+            gap.equalsIgnoreCase("Unknown") || gap.equals("---")) {
+            return gap;
+        }
+        
+        // Try to parse and reformat numeric gaps
+        try {
+            // Remove leading + if present
+            String cleaned = gap.startsWith("+") ? gap.substring(1) : gap;
+            double seconds = Double.parseDouble(cleaned);
+            // Format to 1 decimal place
+            return String.format(Locale.US, "%.1f", seconds);
+        } catch (NumberFormatException e) {
+            // Can't parse - return original
+            return gap;
         }
     }
 
