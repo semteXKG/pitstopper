@@ -20,6 +20,10 @@ public class PitWindowPreferences {
     private static final String KEY_SPEEDHIVE_SESSION_NAME = "speedhive_session_name";
     private static final String KEY_SPEEDHIVE_CAR_NUMBER = "speedhive_car_number";
     private static final String KEY_SPEEDHIVE_CAR_NAME = "speedhive_car_name";
+    
+    // MQTT Server settings
+    private static final String KEY_MQTT_SERVER_PORT = "mqtt_server_port";
+    private static final String KEY_MQTT_SERVER_ENABLED = "mqtt_server_enabled";
 
     // Default values
     private static final int DEFAULT_RACE_START_HOUR = 9;
@@ -35,6 +39,10 @@ public class PitWindowPreferences {
     private static final String DEFAULT_SPEEDHIVE_SESSION_NAME = "";
     private static final String DEFAULT_SPEEDHIVE_CAR_NUMBER = "";
     private static final String DEFAULT_SPEEDHIVE_CAR_NAME = "";
+    
+    // MQTT Server defaults
+    private static final int DEFAULT_MQTT_SERVER_PORT = 1883;
+    private static final boolean DEFAULT_MQTT_SERVER_ENABLED = false;
     
     // SpeedHive mode constants
     public static final String SPEEDHIVE_MODE_OFF = "off";
@@ -160,6 +168,28 @@ public class PitWindowPreferences {
 
     public String getSpeedHiveCarName() {
         return prefs.getString(KEY_SPEEDHIVE_CAR_NAME, DEFAULT_SPEEDHIVE_CAR_NAME);
+    }
+
+    // MQTT Server methods
+    public int getMqttServerPort() {
+        return prefs.getInt(KEY_MQTT_SERVER_PORT, DEFAULT_MQTT_SERVER_PORT);
+    }
+
+    public boolean isMqttServerEnabled() {
+        return prefs.getBoolean(KEY_MQTT_SERVER_ENABLED, DEFAULT_MQTT_SERVER_ENABLED);
+    }
+
+    public void saveMqttServerSettings(int port, boolean enabled) {
+        prefs.edit()
+            .putInt(KEY_MQTT_SERVER_PORT, port)
+            .putBoolean(KEY_MQTT_SERVER_ENABLED, enabled)
+            .apply();
+    }
+
+    public void setMqttServerEnabled(boolean enabled) {
+        prefs.edit()
+            .putBoolean(KEY_MQTT_SERVER_ENABLED, enabled)
+            .apply();
     }
 
     // SpeedHive convenience methods

@@ -25,4 +25,19 @@
     <string name="position_label">POS</string>
     <string name="gap_ahead_label">AHEAD</string>
     <string name="gap_behind_label">BEHIND</string>
+    
+    <!-- MQTT Server strings -->
+    <string name="mqtt_server_title">MQTT Server</string>
+    <string name="mqtt_server_port">Server Port</string>
+    <string name="mqtt_server_status">Server Status</string>
+    <string name="mqtt_server_start">Start Server</string>
+    <string name="mqtt_server_stop">Stop Server</string>
+    <string name="mqtt_server_status_stopped">Stopped</string>
+    <string name="mqtt_server_status_starting">Starting...</string>
+    <string name="mqtt_server_status_running">Running on port %d</string>
+    <string name="mqtt_server_ip_info" formatted="false">Connect to: %s:%d</string>
+    <string name="mqtt_server_started">MQTT server started</string>
+    <string name="mqtt_server_stopped">MQTT server stopped</string>
+    <string name="mqtt_server_error">MQTT server error: %s</string>
+    <string name="mqtt_server_invalid_port">Port must be between 1024 and 65535</string>
 </resources>

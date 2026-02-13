@@ -271,6 +271,87 @@
         app:barrierDirection="bottom"
         app:constraint_referenced_ids="editCarNumber,spinnerDemoCar" />
 
+    <!-- MQTT Server Section -->
+    <TextView
+        android:id="@+id/labelMqttServer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="@string/mqtt_server_title"
+        android:textColor="@color/text_primary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/barrierCarInput" />
+
+    <TextView
+        android:id="@+id/labelMqttServerPort"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/mqtt_server_port"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelMqttServer" />
+
+    <EditText
+        android:id="@+id/editMqttServerPort"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:hint="1883"
+        android:inputType="number"
+        android:minHeight="56dp"
+        android:padding="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@android:color/darker_gray"
+        android:textSize="24sp"
+        android:importantForAutofill="no"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelMqttServerPort" />
+
+    <TextView
+        android:id="@+id/labelMqttServerStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/mqtt_server_status"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editMqttServerPort" />
+
+    <TextView
+        android:id="@+id/textMqttServerStatus"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:minHeight="56dp"
+        android:padding="16dp"
+        android:text="@string/mqtt_server_status_stopped"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        android:gravity="center_vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelMqttServerStatus" />
+
+    <Button
+        android:id="@+id/buttonMqttServerToggle"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="24dp"
+        android:text="@string/mqtt_server_start"
+        android:textSize="20sp"
+        android:backgroundTint="@color/teal_700"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textMqttServerStatus" />
+
     <LinearLayout
         android:id="@+id/buttonLayout"
         android:layout_width="0dp"
@@ -279,7 +360,7 @@
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/barrierCarInput">
+        app:layout_constraintTop_toBottomOf="@id/buttonMqttServerToggle">
 
         <Button
             android:id="@+id/buttonCancel"

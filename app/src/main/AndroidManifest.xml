@@ -8,6 +8,12 @@
     
     <!-- Internet permission for SpeedHive Live Timing API -->
     <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- MQTT Server permissions -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -31,6 +37,12 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false" />
+            
+        <service
+            android:name=".MqttServerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
     </application>
 
