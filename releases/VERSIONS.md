@@ -1,5 +1,37 @@
 # PitStopper Version History
 
+## Version 1.0.4 (February 14, 2026)
+
+### 🚀 Major Features
+
+**Embedded MQTT Server** 🌐
+- **Built-in MQTT Broker**: Embedded Moquette server for device communication
+- **Configurable Port**: Default 1883, customizable in Settings
+- **Anonymous Access**: No authentication required for easy ESP32 integration
+- **Network Accessible**: Binds to all interfaces (0.0.0.0) for network connectivity
+- **Persistent Service**: Runs as foreground service with notification
+- **Auto-Start Support**: Optional automatic server start on app launch
+
+**SpeedHive UI Improvements**
+- **Shorter Leader Text**: Changed "LEADER" to "LEAD" for more compact display
+- **Code Quality**: Extracted constants for LEADER_TEXT and LAST_TEXT
+- **Consistency**: All references use centralized constants for maintainability
+
+### 🔧 Technical Improvements
+
+- **Moquette Integration**: Pure Java MQTT broker (v0.17) with Android compatibility
+- **Netty Conflict Resolution**: Proper packaging exclusions for library compatibility
+- **Permissions**: Added FOREGROUND_SERVICE_DATA_SYNC for Android API 36+
+- **Persistence Configuration**: Uses app's internal directory for broker data storage
+- **Error Handling**: Comprehensive MQTT server lifecycle management
+- **Build System**: Updated version to 1.0.4 (versionCode 4)
+
+### Files
+
+- `pitstopper-1.0.4.apk` - Signed release APK with MQTT server and UI improvements
+
+---
+
 ## Version 1.0.3 (February 12, 2026)
 
 ### 🚀 Major Features
