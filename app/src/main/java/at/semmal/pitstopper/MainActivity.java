@@ -594,7 +594,7 @@ public class MainActivity extends AppCompatActivity {
         Double previousSeconds = parseGapToSeconds(previousGap);
         
         if (currentSeconds == null || previousSeconds == null) {
-            // Can't compare (probably "LEADER", "LAST", or "X Laps") - use white
+            // Can't compare (probably "LEAD", "LAST", or "X Laps") - use white
             textView.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
             return;
         }
@@ -626,7 +626,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Parse a gap string to seconds for trend comparison.
      * 
-     * @param gap Gap string (e.g., "1.234", "+2.567", "LEADER", "2 Laps")
+     * @param gap Gap string (e.g., "1.234", "+2.567", "LEAD", "2 Laps")
      * @return Seconds as Double, or null if not parseable
      */
     private Double parseGapToSeconds(String gap) {
@@ -638,7 +638,7 @@ public class MainActivity extends AppCompatActivity {
         String cleaned = gap.startsWith("+") ? gap.substring(1) : gap;
         
         // Skip special values
-        if (cleaned.equalsIgnoreCase("LEADER") || cleaned.equalsIgnoreCase("LAST") ||
+        if (cleaned.equalsIgnoreCase(SpeedHiveManager.LEADER_TEXT) || cleaned.equalsIgnoreCase(SpeedHiveManager.LAST_TEXT) ||
             cleaned.contains("Lap") || cleaned.contains("lap")) {
             return null;
         }
@@ -652,7 +652,7 @@ public class MainActivity extends AppCompatActivity {
     
     /**
      * Format a gap value for display (1 decimal place).
-     * Preserves special values like LEADER, LAST, and lap counts.
+     * Preserves special values like LEAD, LAST, and lap counts.
      * 
      * @param gap Raw gap string from API or demo
      * @return Formatted gap string (e.g., "1.234" → "1.2")
@@ -663,7 +663,7 @@ public class MainActivity extends AppCompatActivity {
         }
         
         // Preserve special values
-        if (gap.equalsIgnoreCase("LEADER") || gap.equalsIgnoreCase("LAST") ||
+        if (gap.equalsIgnoreCase(SpeedHiveManager.LEADER_TEXT) || gap.equalsIgnoreCase(SpeedHiveManager.LAST_TEXT) ||
             gap.contains("Lap") || gap.contains("lap") ||
             gap.equalsIgnoreCase("Unknown") || gap.equals("---")) {
             return gap;

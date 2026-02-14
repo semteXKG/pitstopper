@@ -177,7 +177,7 @@ public class DemoSpeedHiveManager extends SpeedHiveManager {
         // Calculate gap ahead
         String gapAhead;
         if (position == 1) {
-            gapAhead = "LEADER";
+            gapAhead = SpeedHiveManager.LEADER_TEXT;
         } else {
             DemoCar carAhead = cars.get(position - 2); // position-1 index, then -1 more for car ahead
             double gapSeconds = ourCar.totalTime - carAhead.totalTime;
@@ -187,7 +187,7 @@ public class DemoSpeedHiveManager extends SpeedHiveManager {
         // Calculate gap behind
         String gapBehind;
         if (position == TOTAL_CARS) {
-            gapBehind = "LAST";
+            gapBehind = SpeedHiveManager.LAST_TEXT;
         } else {
             DemoCar carBehind = cars.get(position); // position-1 index, then +1 for car behind
             double gapSeconds = carBehind.totalTime - ourCar.totalTime;

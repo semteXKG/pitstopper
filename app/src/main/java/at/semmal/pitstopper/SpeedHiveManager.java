@@ -25,6 +25,12 @@ public class SpeedHiveManager {
     
     private static final String TAG = "SpeedHiveManager";
     
+    /** Constant for leader position display text */
+    public static final String LEADER_TEXT = "LEAD";
+    
+    /** Constant for last position display text */
+    public static final String LAST_TEXT = "LAST";
+    
     private final SpeedHiveConfig config;
     private final ExecutorService executor;
     
@@ -159,11 +165,11 @@ public class SpeedHiveManager {
      * 
      * @param competitor JSON object for our car
      * @param position Our car's position
-     * @return Gap string ("LEADER" if P1, otherwise gap to car ahead)
+     * @return Gap string ("LEAD" if P1, otherwise gap to car ahead)
      */
     private String extractGapAhead(JSONObject competitor, int position) {
         if (position == 1) {
-            return "LEADER";
+            return LEADER_TEXT;
         } else {
             // 'gp' field is gap to car ahead (previous position)
             String gap = competitor.optString("gp", "");
@@ -191,7 +197,7 @@ public class SpeedHiveManager {
         }
         
         // No car found behind us (we're last)
-        return "LAST";
+        return LAST_TEXT;
     }
     
     /**

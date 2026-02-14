@@ -17,7 +17,7 @@ public class LiveTimingData {
      * Create live timing data for a car.
      * 
      * @param position Current race position (1 = first place)
-     * @param gapAhead Gap to car ahead (e.g., "2.345", "2 Laps", "LEADER")
+     * @param gapAhead Gap to car ahead (e.g., "2.345", "2 Laps", "LEAD")
      * @param gapBehind Gap to car behind (e.g., "1.234", "LAST")
      * @param carNumber Car/race number (e.g., "88")
      * @param driverName Driver or team name
@@ -41,7 +41,7 @@ public class LiveTimingData {
     }
     
     /**
-     * @return Gap to car ahead ("2.345", "2 Laps", "LEADER", etc.)
+     * @return Gap to car ahead ("2.345", "2 Laps", "LEAD", etc.)
      */
     public String getGapAhead() {
         return gapAhead;
