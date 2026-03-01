@@ -1,0 +1,15 @@
+# Enforce LF line endings for all text files
+* text=auto eol=lf
+
+# Explicitly declare binary files to avoid corruption
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.keystore binary
+*.jks binary
+*.apk binary
+*.aab binary
+*.jar binary
+*.class binary
