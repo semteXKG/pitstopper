@@ -1,7 +1,10 @@
 package at.semmal.pitstopper;
 
 import android.app.TimePickerDialog;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -45,6 +48,12 @@ public class SettingsActivity extends AppCompatActivity {
     // MQTT broker UI elements
     private EditText editMqttHost;
     private EditText editMqttPort;
+    private TextView textMqttStatus;
+    private Button buttonMqttConnect;
+
+    private MqttClientManager mqttClientManager;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private MqttClientManager.StateListener mqttStateListener;
 
     // SpeedHive data
     private SpeedHiveManager speedHiveManager;
@@ -95,6 +104,10 @@ public class SettingsActivity extends AppCompatActivity {
         // Initialize MQTT broker views
         editMqttHost = findViewById(R.id.editMqttHost);
         editMqttPort = findViewById(R.id.editMqttPort);
+        textMqttStatus = findViewById(R.id.textMqttStatus);
+        buttonMqttConnect = findViewById(R.id.buttonMqttConnect);
+
+        mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
 
         // Store saved IDs for pre-selection after data loads
         savedEventId = preferences.getSpeedHiveEventId();
@@ -139,6 +152,9 @@ public class SettingsActivity extends AppCompatActivity {
         super.onDestroy();
         if (speedHiveManager != null) {
             speedHiveManager.shutdown();
+        }
+        if (mqttStateListener != null) {
+            mqttClientManager.removeStateListener(mqttStateListener);
         }
     }
 
@@ -564,9 +580,74 @@ public class SettingsActivity extends AppCompatActivity {
                 saveMqttClientSettings();
             }
         };
-
         editMqttHost.addTextChangedListener(savingWatcher);
         editMqttPort.addTextChangedListener(savingWatcher);
+
+        buttonMqttConnect.setOnClickListener(v -> toggleMqttConnection());
+
+        // Register state listener — always dispatch to main thread
+        mqttStateListener = (state, error) -> mainHandler.post(() -> updateMqttStatusUi(state, error));
+        mqttClientManager.addStateListener(mqttStateListener);
+
+        // Reflect current state immediately
+        updateMqttStatusUi(mqttClientManager.getState(), mqttClientManager.getLastError());
+    }
+
+    private void toggleMqttConnection() {
+        MqttClientManager.State state = mqttClientManager.getState();
+        if (state == MqttClientManager.State.CONNECTED || state == MqttClientManager.State.CONNECTING) {
+            preferences.saveMqttSettings(preferences.getMqttHost(), preferences.getMqttPort(), false);
+            mqttClientManager.disconnect();
+        } else {
+            String host = editMqttHost.getText().toString().trim();
+            String portText = editMqttPort.getText().toString().trim();
+            if (host.isEmpty() || portText.isEmpty()) {
+                Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                int port = Integer.parseInt(portText);
+                if (port < 1 || port > 65535) {
+                    Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                preferences.saveMqttSettings(host, port, true);
+                mqttClientManager.connect(host, port);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void updateMqttStatusUi(MqttClientManager.State state, String error) {
+        boolean isEditable = (state == MqttClientManager.State.DISCONNECTED
+                || state == MqttClientManager.State.FAILING);
+        editMqttHost.setEnabled(isEditable);
+        editMqttPort.setEnabled(isEditable);
+
+        switch (state) {
+            case CONNECTED:
+                textMqttStatus.setText(R.string.mqtt_status_connected);
+                textMqttStatus.setTextColor(Color.parseColor("#4CAF50")); // green
+                buttonMqttConnect.setText(R.string.mqtt_disconnect);
+                break;
+            case CONNECTING:
+                textMqttStatus.setText(R.string.mqtt_status_connecting);
+                textMqttStatus.setTextColor(Color.parseColor("#FFC107")); // amber
+                buttonMqttConnect.setText(R.string.mqtt_disconnect);
+                break;
+            case FAILING:
+                String msg = error != null ? error : "";
+                textMqttStatus.setText(getString(R.string.mqtt_status_failing, msg));
+                textMqttStatus.setTextColor(Color.parseColor("#F44336")); // red
+                buttonMqttConnect.setText(R.string.mqtt_connect);
+                break;
+            default: // DISCONNECTED
+                textMqttStatus.setText(R.string.mqtt_status_disconnected);
+                textMqttStatus.setTextColor(Color.parseColor("#9E9E9E")); // gray
+                buttonMqttConnect.setText(R.string.mqtt_connect);
+                break;
+        }
     }
 
     private void saveMqttClientSettings() {
@@ -585,7 +666,7 @@ public class SettingsActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
         }
     }
-    
+
     private void hideSystemUI() {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());

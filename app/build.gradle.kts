@@ -70,6 +70,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.constraintlayout)
     implementation(libs.play.services.location)
+
+    // MQTT client
+    implementation("com.hivemq:hivemq-mqtt-client:1.3.3")
     
 
     

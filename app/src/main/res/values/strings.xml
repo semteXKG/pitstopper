@@ -32,4 +32,10 @@
     <string name="mqtt_port_label">Port</string>
     <string name="mqtt_settings_saved">MQTT settings saved</string>
     <string name="mqtt_invalid_port">Port must be between 1 and 65535</string>
+    <string name="mqtt_connect">Connect</string>
+    <string name="mqtt_disconnect">Disconnect</string>
+    <string name="mqtt_status_disconnected">Not connected</string>
+    <string name="mqtt_status_connecting">Connecting…</string>
+    <string name="mqtt_status_connected">Connected</string>
+    <string name="mqtt_status_failing">Failed: %s</string>
 </resources>
