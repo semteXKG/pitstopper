@@ -42,10 +42,9 @@ public class SettingsActivity extends AppCompatActivity {
     private EditText editCarNumber; // For SpeedHive live mode
     private Spinner spinnerDemoCar; // For demo mode car selection
     
-    // MQTT Server UI elements
-    private EditText editMqttServerPort;
-    private TextView textMqttServerStatus;
-    private Button buttonMqttServerToggle;
+    // MQTT broker UI elements
+    private EditText editMqttHost;
+    private EditText editMqttPort;
 
     // SpeedHive data
     private SpeedHiveManager speedHiveManager;
@@ -93,10 +92,9 @@ public class SettingsActivity extends AppCompatActivity {
         editCarNumber = findViewById(R.id.editCarNumber);
         spinnerDemoCar = findViewById(R.id.spinnerDemoCar);
         
-        // Initialize MQTT Server views
-        editMqttServerPort = findViewById(R.id.editMqttServerPort);
-        textMqttServerStatus = findViewById(R.id.textMqttServerStatus);
-        buttonMqttServerToggle = findViewById(R.id.buttonMqttServerToggle);
+        // Initialize MQTT broker views
+        editMqttHost = findViewById(R.id.editMqttHost);
+        editMqttPort = findViewById(R.id.editMqttPort);
 
         // Store saved IDs for pre-selection after data loads
         savedEventId = preferences.getSpeedHiveEventId();
@@ -117,8 +115,8 @@ public class SettingsActivity extends AppCompatActivity {
         // Load SpeedHive settings AFTER spinners are set up
         loadSpeedHiveSettings();
         
-        // Set up MQTT Server
-        setupMqttServer();
+        // Set up MQTT broker
+        setupMqttClient();
 
         // Set up time picker button
         buttonSelectTime.setOnClickListener(v -> showTimePicker());
@@ -551,118 +549,43 @@ public class SettingsActivity extends AppCompatActivity {
         preferences.saveAllSpeedHive(mode, eventId, eventName, sessionId, sessionName, carNumber, carName);
     }
     
-    // --- MQTT Server ---
-    
-    private void setupMqttServer() {
-        // Load saved port
-        editMqttServerPort.setText(String.valueOf(preferences.getMqttServerPort()));
-        
-        // Set up port validation
-        editMqttServerPort.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+    // --- MQTT Broker ---
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+    private void setupMqttClient() {
+        editMqttHost.setText(preferences.getMqttHost());
+        editMqttPort.setText(String.valueOf(preferences.getMqttPort()));
+
+        TextWatcher savingWatcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
             @Override
             public void afterTextChanged(Editable s) {
-                validateMqttServerPort();
+                saveMqttClientSettings();
             }
-        });
-        
-        // Set up button click
-        buttonMqttServerToggle.setOnClickListener(v -> toggleMqttServer());
-        
-        // Update UI based on current server status
-        updateMqttServerStatus();
-    }
-    
-    private void validateMqttServerPort() {
-        String portText = editMqttServerPort.getText().toString().trim();
-        boolean isValid = false;
-        
-        try {
-            if (!portText.isEmpty()) {
-                int port = Integer.parseInt(portText);
-                isValid = MqttServerManager.isValidPort(port);
-            }
-        } catch (NumberFormatException e) {
-            isValid = false;
-        }
-        
-        // Enable button only if port is valid or server is already running
-        buttonMqttServerToggle.setEnabled(isValid || preferences.isMqttServerEnabled());
-    }
-    
-    private void toggleMqttServer() {
-        if (preferences.isMqttServerEnabled()) {
-            // Stop server
-            MqttServerService.stopMqttServer(this);
-            Toast.makeText(this, R.string.mqtt_server_stopped, Toast.LENGTH_SHORT).show();
-        } else {
-            // Start server
-            String portText = editMqttServerPort.getText().toString().trim();
-            try {
-                int port = Integer.parseInt(portText);
-                if (!MqttServerManager.isValidPort(port)) {
-                    Toast.makeText(this, R.string.mqtt_server_invalid_port, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                
-                // Save port setting
-                preferences.saveMqttServerSettings(port, false); // Service will update enabled state
-                
-                // Start server via service
-                MqttServerService.startMqttServer(this, port);
-                Toast.makeText(this, R.string.mqtt_server_started, Toast.LENGTH_SHORT).show();
-                
-            } catch (NumberFormatException e) {
-                Toast.makeText(this, R.string.mqtt_server_invalid_port, Toast.LENGTH_SHORT).show();
-            }
-        }
-        
-        // Update UI after a short delay to allow service to process
-        android.os.Handler handler = new android.os.Handler();
-        handler.postDelayed(this::updateMqttServerStatus, 1000);
-    }
-    
-    private void updateMqttServerStatus() {
-        boolean isRunning = preferences.isMqttServerEnabled();
-        
-        if (isRunning) {
-            buttonMqttServerToggle.setText(R.string.mqtt_server_stop);
-            int port = preferences.getMqttServerPort();
-            String statusText = getString(R.string.mqtt_server_status_running, port);
-            
-            // Try to get IP address for connection info
-            try {
-                MqttServerManager tempManager = new MqttServerManager(this);
-                String serverInfo = tempManager.getServerInfo();
-                if (!serverInfo.equals("Server not running")) {
-                    statusText = getString(R.string.mqtt_server_ip_info, 
-                        serverInfo.split(":")[0], port);
-                }
-            } catch (Exception e) {
-                // Use fallback status text
-            }
-            
-            textMqttServerStatus.setText(statusText);
-        } else {
-            buttonMqttServerToggle.setText(R.string.mqtt_server_start);
-            textMqttServerStatus.setText(R.string.mqtt_server_status_stopped);
-        }
-        
-        validateMqttServerPort();
-    }
-    
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Update MQTT server status when returning to settings
-        updateMqttServerStatus();
+        };
+
+        editMqttHost.addTextChangedListener(savingWatcher);
+        editMqttPort.addTextChangedListener(savingWatcher);
     }
 
+    private void saveMqttClientSettings() {
+        String host = editMqttHost.getText().toString().trim();
+        String portText = editMqttPort.getText().toString().trim();
+        if (host.isEmpty() || portText.isEmpty()) return;
+
+        try {
+            int port = Integer.parseInt(portText);
+            if (port < 1 || port > 65535) {
+                Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            preferences.saveMqttSettings(host, port, preferences.isMqttEnabled());
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
+        }
+    }
+    
     private void hideSystemUI() {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());

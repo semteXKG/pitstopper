@@ -21,9 +21,10 @@ public class PitWindowPreferences {
     private static final String KEY_SPEEDHIVE_CAR_NUMBER = "speedhive_car_number";
     private static final String KEY_SPEEDHIVE_CAR_NAME = "speedhive_car_name";
     
-    // MQTT Server settings
-    private static final String KEY_MQTT_SERVER_PORT = "mqtt_server_port";
-    private static final String KEY_MQTT_SERVER_ENABLED = "mqtt_server_enabled";
+    // MQTT remote broker settings
+    private static final String KEY_MQTT_HOST = "mqtt_host";
+    private static final String KEY_MQTT_PORT = "mqtt_port";
+    private static final String KEY_MQTT_ENABLED = "mqtt_enabled";
 
     // Default values
     private static final int DEFAULT_RACE_START_HOUR = 9;
@@ -40,9 +41,10 @@ public class PitWindowPreferences {
     private static final String DEFAULT_SPEEDHIVE_CAR_NUMBER = "";
     private static final String DEFAULT_SPEEDHIVE_CAR_NAME = "";
     
-    // MQTT Server defaults
-    private static final int DEFAULT_MQTT_SERVER_PORT = 1883;
-    private static final boolean DEFAULT_MQTT_SERVER_ENABLED = false;
+    // MQTT remote broker defaults
+    private static final String DEFAULT_MQTT_HOST = "broker";
+    private static final int DEFAULT_MQTT_PORT = 1883;
+    private static final boolean DEFAULT_MQTT_ENABLED = false;
     
     // SpeedHive mode constants
     public static final String SPEEDHIVE_MODE_OFF = "off";
@@ -170,25 +172,24 @@ public class PitWindowPreferences {
         return prefs.getString(KEY_SPEEDHIVE_CAR_NAME, DEFAULT_SPEEDHIVE_CAR_NAME);
     }
 
-    // MQTT Server methods
-    public int getMqttServerPort() {
-        return prefs.getInt(KEY_MQTT_SERVER_PORT, DEFAULT_MQTT_SERVER_PORT);
+    // MQTT remote broker methods
+    public String getMqttHost() {
+        return prefs.getString(KEY_MQTT_HOST, DEFAULT_MQTT_HOST);
     }
 
-    public boolean isMqttServerEnabled() {
-        return prefs.getBoolean(KEY_MQTT_SERVER_ENABLED, DEFAULT_MQTT_SERVER_ENABLED);
+    public int getMqttPort() {
+        return prefs.getInt(KEY_MQTT_PORT, DEFAULT_MQTT_PORT);
     }
 
-    public void saveMqttServerSettings(int port, boolean enabled) {
+    public boolean isMqttEnabled() {
+        return prefs.getBoolean(KEY_MQTT_ENABLED, DEFAULT_MQTT_ENABLED);
+    }
+
+    public void saveMqttSettings(String host, int port, boolean enabled) {
         prefs.edit()
-            .putInt(KEY_MQTT_SERVER_PORT, port)
-            .putBoolean(KEY_MQTT_SERVER_ENABLED, enabled)
-            .apply();
-    }
-
-    public void setMqttServerEnabled(boolean enabled) {
-        prefs.edit()
-            .putBoolean(KEY_MQTT_SERVER_ENABLED, enabled)
+            .putString(KEY_MQTT_HOST, host)
+            .putInt(KEY_MQTT_PORT, port)
+            .putBoolean(KEY_MQTT_ENABLED, enabled)
             .apply();
     }
 

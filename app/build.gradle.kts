@@ -71,8 +71,7 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.play.services.location)
     
-    // MQTT Server - Moquette broker
-    implementation("io.moquette:moquette-broker:0.17")
+
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

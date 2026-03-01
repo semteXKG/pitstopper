@@ -167,17 +167,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Enable fullscreen immersive mode
         hideSystemUI();
-        
-        // Auto-start MQTT server if enabled
-        initializeMqttServer();
-    }
-    
-    private void initializeMqttServer() {
-        if (preferences.isMqttServerEnabled()) {
-            int port = preferences.getMqttServerPort();
-            Log.i(TAG, "Auto-starting MQTT server on port " + port);
-            MqttServerService.startMqttServer(this, port);
-        }
     }
 
     /**
