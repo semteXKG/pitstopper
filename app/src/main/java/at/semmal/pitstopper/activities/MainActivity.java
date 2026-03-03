@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private MqttClientManager mqttClientManager;
     private MqttClientManager.StateListener mqttButtonsListener;
     private boolean buttonsSubscribed = false;
+    private boolean flashMessageActive = false;
     private ExternalSessionManager externalSessionManager;
     
     // SpeedHive Live Timing UI
@@ -281,6 +282,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        flashMessageActive = false;
         // Reload settings and recreate alert manager (settings might have changed)
         alertManager = new PitWindowAlertManager(
                 preferences.getRaceStartHour(),
@@ -317,8 +319,10 @@ public class MainActivity extends AppCompatActivity {
         handler.removeCallbacks(speedHivePollingRunnable);
         handler.removeCallbacks(sessionCheckRunnable);
 
-        // Cancel any active pit stop countdown
-        countdownModule.cancelCountdown();
+        // Cancel countdown only if truly going to background, not when launching a flash overlay
+        if (!flashMessageActive) {
+            countdownModule.cancelCountdown();
+        }
 
         // Unsubscribe MQTT button state listener (topic subscription stays active)
         if (mqttButtonsListener != null) {
@@ -450,6 +454,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showFlashMessage(String message) {
+        flashMessageActive = true;
         Intent intent = new Intent(this, FlashMessageActivity.class);
         intent.putExtra(FlashMessageActivity.EXTRA_MESSAGE, message);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
