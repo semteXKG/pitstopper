@@ -44,6 +44,7 @@ public class PitWindowPreferences {
     // Pit stop duration
     private static final String KEY_MIN_PIT_STOP_SECONDS = "min_pit_stop_seconds";
     private static final int DEFAULT_MIN_PIT_STOP_SECONDS = 60;
+    private static final String DEFAULT_MQTT_HOST = "broker";
     private static final int DEFAULT_MQTT_PORT = 1883;
     private static final boolean DEFAULT_MQTT_ENABLED = false;
     
