@@ -56,6 +56,7 @@ public class SessionActivity extends AppCompatActivity {
 
         Button btnNew     = findViewById(R.id.buttonNewSession);
         Button btnRestore = findViewById(R.id.buttonRestoreSession);
+        findViewById(R.id.buttonClose).setOnClickListener(v -> finish());
 
         btnNew.setOnClickListener(v -> createNewSession());
         btnRestore.setOnClickListener(v -> restoreSession());
@@ -64,11 +65,13 @@ public class SessionActivity extends AppCompatActivity {
         String saved = preferences.getDeviceLabel();
         if (saved != null) editDeviceName.setText(saved);
 
-        // Show current session if one exists
+        // Show current session (auto-create if first run)
         String sessionId = preferences.getSessionId();
-        if (sessionId != null) {
-            showSession(sessionId);
+        if (sessionId == null) {
+            sessionId = preferences.generateAndSaveNewSessionId();
+            sessionManager.connect(sessionId);
         }
+        showSession(sessionId);
 
         // Watch connection state
         stateListener = (state, error) -> runOnUiThread(() -> updateStatus(state, error));
