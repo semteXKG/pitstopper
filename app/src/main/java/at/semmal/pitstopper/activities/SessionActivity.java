@@ -116,23 +116,25 @@ public class SessionActivity extends AppCompatActivity {
     }
 
     private void showSession(String sessionId) {
-        // Show truncated ID
         textSessionId.setText(sessionId.substring(0, 8) + "...");
 
-        // Generate QR code
-        try {
-            String uri = DEEP_LINK_BASE + sessionId;
-            BitMatrix matrix = new MultiFormatWriter().encode(uri, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE);
-            Bitmap bmp = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565);
-            for (int x = 0; x < QR_SIZE; x++) {
+        // Run QR generation off the main thread — 512x512 bitmap is expensive
+        new Thread(() -> {
+            try {
+                String uri = DEEP_LINK_BASE + sessionId;
+                BitMatrix matrix = new MultiFormatWriter().encode(uri, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE);
+                int[] pixels = new int[QR_SIZE * QR_SIZE];
                 for (int y = 0; y < QR_SIZE; y++) {
-                    bmp.setPixel(x, y, matrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                    for (int x = 0; x < QR_SIZE; x++) {
+                        pixels[y * QR_SIZE + x] = matrix.get(x, y) ? Color.BLACK : Color.WHITE;
+                    }
                 }
+                Bitmap bmp = Bitmap.createBitmap(pixels, QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565);
+                runOnUiThread(() -> imageQrCode.setImageBitmap(bmp));
+            } catch (WriterException e) {
+                Log.e(TAG, "QR generation failed", e);
             }
-            imageQrCode.setImageBitmap(bmp);
-        } catch (WriterException e) {
-            Log.e(TAG, "QR generation failed", e);
-        }
+        }).start();
     }
 
     private void updateStatus(MqttClientManager.State state, String error) {
