@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
     // MQTT
     private MqttClientManager mqttClientManager;
     private MqttClientManager.StateListener mqttButtonsListener;
+    private boolean buttonsSubscribed = false;
     private ExternalSessionManager externalSessionManager;
     
     // SpeedHive Live Timing UI
@@ -141,6 +142,9 @@ public class MainActivity extends AppCompatActivity {
         // Grab shared MQTT manager
         mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
         externalSessionManager = ((PitStopperApplication) getApplication()).getExternalSessionManager();
+
+        // Subscribe to physical button events once — not in onResume to avoid duplicate subscriptions
+        subscribeToButtons();
 
         // Handle deep link join (pitstopper://join?session=...)
         handleSessionDeepLink(getIntent());
@@ -292,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
         initializeSpeedHive();
 
         // Subscribe to physical button events
-        subscribeToButtons();
+        // (moved to onCreate — do NOT call here to avoid duplicate subscriptions)
 
         // Register for external session events
         externalSessionManager.setEventListener((eventType, from, ts) ->
@@ -316,7 +320,7 @@ public class MainActivity extends AppCompatActivity {
         // Cancel any active pit stop countdown
         countdownModule.cancelCountdown();
 
-        // Unsubscribe MQTT button listener
+        // Unsubscribe MQTT button state listener (topic subscription stays active)
         if (mqttButtonsListener != null) {
             mqttClientManager.removeStateListener(mqttButtonsListener);
             mqttButtonsListener = null;
@@ -384,12 +388,15 @@ public class MainActivity extends AppCompatActivity {
      * Subscribes immediately if already connected, otherwise waits for connection.
      */
     private void subscribeToButtons() {
+        if (buttonsSubscribed) return;
         if (mqttClientManager.isConnected()) {
             mqttClientManager.subscribe("fiesta/buttons", this::handleButtonMessage);
+            buttonsSubscribed = true;
         } else {
             mqttButtonsListener = (state, error) -> {
-                if (state == MqttClientManager.State.CONNECTED) {
+                if (state == MqttClientManager.State.CONNECTED && !buttonsSubscribed) {
                     mqttClientManager.subscribe("fiesta/buttons", this::handleButtonMessage);
+                    buttonsSubscribed = true;
                 }
             };
             mqttClientManager.addStateListener(mqttButtonsListener);
@@ -407,6 +414,8 @@ public class MainActivity extends AppCompatActivity {
                     publishSessionEvent("PIT_PRESSED");
                 } else if ("ALARM".equals(button)) {
                     publishSessionEvent("ALARM");
+                } else if ("FCK".equals(button) || "STINT".equals(button)) {
+                    runOnUiThread(() -> showFlashMessage(button + "\nsent"));
                 }
             }
         } catch (JSONException e) {
@@ -438,6 +447,13 @@ public class MainActivity extends AppCompatActivity {
         CenterModule returnTo = (preCountdownModule != null) ? preCountdownModule : pitTimerModule;
         switchToModule(returnTo, true);
         preCountdownModule = null;
+    }
+
+    private void showFlashMessage(String message) {
+        Intent intent = new Intent(this, FlashMessageActivity.class);
+        intent.putExtra(FlashMessageActivity.EXTRA_MESSAGE, message);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 
     /** Animate to a specific module (not part of the swipe cycle). */

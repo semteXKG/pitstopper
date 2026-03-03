@@ -45,6 +45,11 @@
             android:name=".activities.SessionActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.FlashMessageActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+
     </application>
 
 </manifest>
