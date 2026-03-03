@@ -28,7 +28,7 @@ public class SessionActivity extends AppCompatActivity {
 
     private static final String TAG = "SessionActivity";
     private static final int QR_SIZE = 512;
-    private static final String DEEP_LINK_BASE = "pitstopper://join?session=";
+    private static final String DEEP_LINK_SCHEME = "pitstopper://join?";
 
     private ImageView imageQrCode;
     private TextView textStatus;
@@ -124,7 +124,10 @@ public class SessionActivity extends AppCompatActivity {
         // Run QR generation off the main thread — 512x512 bitmap is expensive
         new Thread(() -> {
             try {
-                String uri = DEEP_LINK_BASE + sessionId;
+                String host = preferences.getExtMqttHost();
+                int port = preferences.getExtMqttPort();
+                String uri = DEEP_LINK_SCHEME + "session=" + sessionId
+                        + "&host=" + host + "&port=" + port;
                 BitMatrix matrix = new MultiFormatWriter().encode(uri, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE);
                 int[] pixels = new int[QR_SIZE * QR_SIZE];
                 for (int y = 0; y < QR_SIZE; y++) {
