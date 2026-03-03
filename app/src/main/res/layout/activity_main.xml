@@ -133,5 +133,20 @@
         app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Team Session button — to the left of the settings button -->
+    <ImageButton
+        android:id="@+id/buttonSession"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_margin="16dp"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Team Session"
+        android:src="@drawable/ic_session"
+        app:tint="@color/text_primary"
+        app:layout_constraintEnd_toStartOf="@id/buttonSettings"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 

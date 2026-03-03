@@ -190,6 +190,10 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        ImageButton buttonSession = findViewById(R.id.buttonSession);
+        buttonSession.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, SessionActivity.class)));
+
         // Swipe up or down on the center module container to toggle between modules
         GestureDetector swipeDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             private static final int SWIPE_THRESHOLD = 100;
