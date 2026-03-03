@@ -7,6 +7,7 @@ import at.semmal.pitstopper.livetiming.SpeedHiveManager;
 import at.semmal.pitstopper.model.SpeedHiveEvent;
 import at.semmal.pitstopper.model.SpeedHiveSession;
 import at.semmal.pitstopper.mqtt.MqttClientManager;
+import at.semmal.pitstopper.mqtt.ExternalSessionManager;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 
 import android.app.TimePickerDialog;
@@ -62,9 +63,15 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView textMqttStatus;
     private Button buttonMqttConnect;
 
+    private EditText editExtMqttHost;
+    private EditText editExtMqttPort;
+    private TextView textExtMqttStatus;
+    private Button buttonExtMqttConnect;
+
     private MqttClientManager mqttClientManager;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private MqttClientManager.StateListener mqttStateListener;
+    private MqttClientManager.StateListener extMqttStateListener;
 
     // SpeedHive data
     private SpeedHiveManager speedHiveManager;
@@ -119,6 +126,11 @@ public class SettingsActivity extends AppCompatActivity {
         textMqttStatus = findViewById(R.id.textMqttStatus);
         buttonMqttConnect = findViewById(R.id.buttonMqttConnect);
 
+        editExtMqttHost = findViewById(R.id.editExtMqttHost);
+        editExtMqttPort = findViewById(R.id.editExtMqttPort);
+        textExtMqttStatus = findViewById(R.id.textExtMqttStatus);
+        buttonExtMqttConnect = findViewById(R.id.buttonExtMqttConnect);
+
         mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
 
         // Store saved IDs for pre-selection after data loads
@@ -142,6 +154,9 @@ public class SettingsActivity extends AppCompatActivity {
         
         // Set up MQTT broker
         setupMqttClient();
+
+        // Set up external (public) MQTT broker
+        setupExtMqttClient();
 
         // Set up time picker button
         buttonSelectTime.setOnClickListener(v -> showTimePicker());
@@ -171,6 +186,10 @@ public class SettingsActivity extends AppCompatActivity {
         }
         if (mqttStateListener != null) {
             mqttClientManager.removeStateListener(mqttStateListener);
+        }
+        if (extMqttStateListener != null) {
+            ((PitStopperApplication) getApplication()).getExternalSessionManager()
+                    .removeStateListener(extMqttStateListener);
         }
     }
 
@@ -689,6 +708,105 @@ public class SettingsActivity extends AppCompatActivity {
         } catch (NumberFormatException e) {
             Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    // --- External (Public) MQTT Broker ---
+
+    private void setupExtMqttClient() {
+        ExternalSessionManager extMqtt = ((PitStopperApplication) getApplication()).getExternalSessionManager();
+
+        editExtMqttHost.setText(preferences.getExtMqttHost());
+        editExtMqttPort.setText(String.valueOf(preferences.getExtMqttPort()));
+
+        TextWatcher savingWatcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                saveExtMqttClientSettings();
+            }
+        };
+        editExtMqttHost.addTextChangedListener(savingWatcher);
+        editExtMqttPort.addTextChangedListener(savingWatcher);
+
+        buttonExtMqttConnect.setOnClickListener(v -> toggleExtMqttConnection(extMqtt));
+
+        extMqttStateListener = (state, error) -> mainHandler.post(() -> updateExtMqttStatusUi(state, error));
+        extMqtt.addStateListener(extMqttStateListener);
+        updateExtMqttStatusUi(extMqtt.getState(), null);
+    }
+
+    private void toggleExtMqttConnection(ExternalSessionManager extMqtt) {
+        MqttClientManager.State state = extMqtt.getState();
+        if (state == MqttClientManager.State.CONNECTED || state == MqttClientManager.State.CONNECTING) {
+            preferences.saveExtMqttSettings(preferences.getExtMqttHost(), preferences.getExtMqttPort(), false);
+            extMqtt.disconnect();
+        } else {
+            String host = editExtMqttHost.getText().toString().trim();
+            String portText = editExtMqttPort.getText().toString().trim();
+            if (host.isEmpty() || portText.isEmpty()) {
+                Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                int port = Integer.parseInt(portText);
+                if (port < 1 || port > 65535) {
+                    Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                preferences.saveExtMqttSettings(host, port, true);
+                String sessionId = preferences.getSessionId();
+                if (sessionId != null) {
+                    extMqtt.connect(sessionId, host, port);
+                } else {
+                    Toast.makeText(this, "Create a team session first", Toast.LENGTH_SHORT).show();
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, R.string.mqtt_invalid_port, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void updateExtMqttStatusUi(MqttClientManager.State state, String error) {
+        boolean isEditable = (state == MqttClientManager.State.DISCONNECTED
+                || state == MqttClientManager.State.FAILING);
+        editExtMqttHost.setEnabled(isEditable);
+        editExtMqttPort.setEnabled(isEditable);
+
+        switch (state) {
+            case CONNECTED:
+                textExtMqttStatus.setText(R.string.mqtt_status_connected);
+                textExtMqttStatus.setTextColor(Color.parseColor("#4CAF50"));
+                buttonExtMqttConnect.setText(R.string.mqtt_disconnect);
+                break;
+            case CONNECTING:
+                textExtMqttStatus.setText(R.string.mqtt_status_connecting);
+                textExtMqttStatus.setTextColor(Color.parseColor("#FFC107"));
+                buttonExtMqttConnect.setText(R.string.mqtt_disconnect);
+                break;
+            case FAILING:
+                String msg = error != null ? error : "";
+                textExtMqttStatus.setText(getString(R.string.mqtt_status_failing, msg));
+                textExtMqttStatus.setTextColor(Color.parseColor("#F44336"));
+                buttonExtMqttConnect.setText(R.string.mqtt_connect);
+                break;
+            default:
+                textExtMqttStatus.setText(R.string.mqtt_status_disconnected);
+                textExtMqttStatus.setTextColor(Color.parseColor("#9E9E9E"));
+                buttonExtMqttConnect.setText(R.string.mqtt_connect);
+                break;
+        }
+    }
+
+    private void saveExtMqttClientSettings() {
+        String host = editExtMqttHost.getText().toString().trim();
+        String portText = editExtMqttPort.getText().toString().trim();
+        if (host.isEmpty() || portText.isEmpty()) return;
+        try {
+            int port = Integer.parseInt(portText);
+            if (port < 1 || port > 65535) return;
+            preferences.saveExtMqttSettings(host, port, preferences.isExtMqttEnabled());
+        } catch (NumberFormatException ignored) {}
     }
 
     private void hideSystemUI() {

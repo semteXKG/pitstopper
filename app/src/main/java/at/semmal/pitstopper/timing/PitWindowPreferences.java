@@ -26,6 +26,11 @@ public class PitWindowPreferences {
     private static final String KEY_MQTT_PORT = "mqtt_port";
     private static final String KEY_MQTT_ENABLED = "mqtt_enabled";
 
+    // External (public) MQTT broker settings
+    private static final String KEY_EXT_MQTT_HOST = "ext_mqtt_host";
+    private static final String KEY_EXT_MQTT_PORT = "ext_mqtt_port";
+    private static final String KEY_EXT_MQTT_ENABLED = "ext_mqtt_enabled";
+
     // Default values
     private static final int DEFAULT_RACE_START_HOUR = 9;
     private static final int DEFAULT_RACE_START_MINUTE = 0;
@@ -52,6 +57,10 @@ public class PitWindowPreferences {
     private static final String DEFAULT_MQTT_HOST = "broker";
     private static final int DEFAULT_MQTT_PORT = 1883;
     private static final boolean DEFAULT_MQTT_ENABLED = false;
+
+    private static final String DEFAULT_EXT_MQTT_HOST = "broker.hivemq.com";
+    private static final int DEFAULT_EXT_MQTT_PORT = 1883;
+    private static final boolean DEFAULT_EXT_MQTT_ENABLED = false;
     
     // SpeedHive mode constants
     public static final String SPEEDHIVE_MODE_OFF = "off";
@@ -197,6 +206,27 @@ public class PitWindowPreferences {
             .putString(KEY_MQTT_HOST, host)
             .putInt(KEY_MQTT_PORT, port)
             .putBoolean(KEY_MQTT_ENABLED, enabled)
+            .apply();
+    }
+
+    // External (public) MQTT broker methods
+    public String getExtMqttHost() {
+        return prefs.getString(KEY_EXT_MQTT_HOST, DEFAULT_EXT_MQTT_HOST);
+    }
+
+    public int getExtMqttPort() {
+        return prefs.getInt(KEY_EXT_MQTT_PORT, DEFAULT_EXT_MQTT_PORT);
+    }
+
+    public boolean isExtMqttEnabled() {
+        return prefs.getBoolean(KEY_EXT_MQTT_ENABLED, DEFAULT_EXT_MQTT_ENABLED);
+    }
+
+    public void saveExtMqttSettings(String host, int port, boolean enabled) {
+        prefs.edit()
+            .putString(KEY_EXT_MQTT_HOST, host)
+            .putInt(KEY_EXT_MQTT_PORT, port)
+            .putBoolean(KEY_EXT_MQTT_ENABLED, enabled)
             .apply();
     }
 

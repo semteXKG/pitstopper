@@ -27,9 +27,9 @@ public class PitStopperApplication extends Application {
         }
 
         String sessionId = preferences.getSessionId();
-        if (sessionId != null) {
+        if (sessionId != null && preferences.isExtMqttEnabled()) {
             Log.i(TAG, "Restoring external session: " + sessionId.substring(0, 8) + "...");
-            externalSessionManager.connect(sessionId);
+            externalSessionManager.connect(sessionId, preferences.getExtMqttHost(), preferences.getExtMqttPort());
         }
     }
 

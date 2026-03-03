@@ -17,8 +17,8 @@ import org.json.JSONObject;
 public class ExternalSessionManager {
 
     private static final String TAG = "ExternalSessionManager";
-    private static final String PUBLIC_BROKER = "broker.hivemq.com";
-    private static final int PUBLIC_BROKER_PORT = 1883;
+    private static final String DEFAULT_BROKER = "broker.hivemq.com";
+    private static final int DEFAULT_PORT = 1883;
     private static final String TOPIC_PREFIX = "pitstopper/";
     private static final String TOPIC_SUFFIX = "/events";
 
@@ -32,15 +32,20 @@ public class ExternalSessionManager {
     private String sessionId;
     private SessionEventListener eventListener;
 
-    /** Connect to the public broker and subscribe to the session topic. */
+    /** Connect to the public broker using saved settings and subscribe to the session topic. */
     public void connect(String sessionId) {
+        connect(sessionId, DEFAULT_BROKER, DEFAULT_PORT);
+    }
+
+    /** Connect to a specific broker and subscribe to the session topic. */
+    public void connect(String sessionId, String host, int port) {
         this.sessionId = sessionId;
         mqtt.addStateListener((state, error) -> {
             if (state == MqttClientManager.State.CONNECTED) {
                 subscribeToTopic();
             }
         });
-        mqtt.connect(PUBLIC_BROKER, PUBLIC_BROKER_PORT);
+        mqtt.connect(host, port);
     }
 
     /** Disconnect and clean up. */

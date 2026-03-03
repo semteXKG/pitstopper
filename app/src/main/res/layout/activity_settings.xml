@@ -398,6 +398,104 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textMqttStatus" />
 
+    <!-- External (Public) MQTT Broker Section -->
+    <TextView
+        android:id="@+id/labelExtMqttSection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="@string/ext_mqtt_section_title"
+        android:textColor="@color/text_primary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttonMqttConnect" />
+
+    <TextView
+        android:id="@+id/labelExtMqttHost"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/mqtt_host_label"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelExtMqttSection" />
+
+    <EditText
+        android:id="@+id/editExtMqttHost"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:hint="broker.hivemq.com"
+        android:inputType="textNoSuggestions"
+        android:minHeight="56dp"
+        android:padding="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@android:color/darker_gray"
+        android:textSize="24sp"
+        android:importantForAutofill="no"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelExtMqttHost" />
+
+    <TextView
+        android:id="@+id/labelExtMqttPort"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/mqtt_port_label"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editExtMqttHost" />
+
+    <EditText
+        android:id="@+id/editExtMqttPort"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:hint="1883"
+        android:inputType="number"
+        android:minHeight="56dp"
+        android:padding="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@android:color/darker_gray"
+        android:textSize="24sp"
+        android:importantForAutofill="no"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelExtMqttPort" />
+
+    <TextView
+        android:id="@+id/textExtMqttStatus"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:padding="16dp"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
+        android:text="@string/mqtt_status_disconnected"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editExtMqttPort" />
+
+    <Button
+        android:id="@+id/buttonExtMqttConnect"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/mqtt_connect"
+        android:textSize="20sp"
+        android:backgroundTint="@color/teal_700"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textExtMqttStatus" />
+
     <LinearLayout
         android:id="@+id/buttonLayout"
         android:layout_width="0dp"
@@ -406,7 +504,7 @@
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonMqttConnect">
+        app:layout_constraintTop_toBottomOf="@id/buttonExtMqttConnect">
 
         <Button
             android:id="@+id/buttonCancel"
