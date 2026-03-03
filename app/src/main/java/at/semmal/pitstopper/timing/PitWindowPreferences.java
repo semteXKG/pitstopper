@@ -44,6 +44,11 @@ public class PitWindowPreferences {
     // Pit stop duration
     private static final String KEY_MIN_PIT_STOP_SECONDS = "min_pit_stop_seconds";
     private static final int DEFAULT_MIN_PIT_STOP_SECONDS = 60;
+
+    // External session (team sync)
+    private static final String KEY_SESSION_ID = "external_session_id";
+    private static final String KEY_DEVICE_LABEL = "device_label";
+
     private static final String DEFAULT_MQTT_HOST = "broker";
     private static final int DEFAULT_MQTT_PORT = 1883;
     private static final boolean DEFAULT_MQTT_ENABLED = false;
@@ -215,6 +220,29 @@ public class PitWindowPreferences {
 
     public void saveMinPitStopSeconds(int seconds) {
         prefs.edit().putInt(KEY_MIN_PIT_STOP_SECONDS, seconds).apply();
+    }
+
+    public String getSessionId() {
+        return prefs.getString(KEY_SESSION_ID, null);
+    }
+
+    public void saveSessionId(String sessionId) {
+        prefs.edit().putString(KEY_SESSION_ID, sessionId).apply();
+    }
+
+    /** Generates a new random UUID, persists it, and returns it. */
+    public String generateAndSaveNewSessionId() {
+        String id = java.util.UUID.randomUUID().toString();
+        saveSessionId(id);
+        return id;
+    }
+
+    public String getDeviceLabel() {
+        return prefs.getString(KEY_DEVICE_LABEL, null);
+    }
+
+    public void saveDeviceLabel(String label) {
+        prefs.edit().putString(KEY_DEVICE_LABEL, label).apply();
     }
 
     // Convenience method to get race start time as formatted string

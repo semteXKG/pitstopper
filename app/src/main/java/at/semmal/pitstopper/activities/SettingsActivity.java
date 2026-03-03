@@ -10,6 +10,7 @@ import at.semmal.pitstopper.mqtt.MqttClientManager;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -148,6 +149,10 @@ public class SettingsActivity extends AppCompatActivity {
         // Set up button listeners
         buttonSave.setOnClickListener(v -> saveSettings());
         buttonCancel.setOnClickListener(v -> finish());
+
+        Button buttonTeamSession = findViewById(R.id.buttonTeamSession);
+        buttonTeamSession.setOnClickListener(v ->
+                startActivity(new Intent(this, SessionActivity.class)));
     }
 
     @Override

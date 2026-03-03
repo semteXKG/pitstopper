@@ -73,6 +73,9 @@ dependencies {
 
     // MQTT client
     implementation("com.hivemq:hivemq-mqtt-client:1.3.3")
+
+    // QR code generation (encoding only; system camera handles scanning)
+    implementation("com.google.zxing:core:3.5.3")
     
 
     

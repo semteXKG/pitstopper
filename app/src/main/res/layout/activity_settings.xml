@@ -429,6 +429,19 @@
 
     </LinearLayout>
 
+    <Button
+        android:id="@+id/buttonTeamSession"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Team Session"
+        android:textSize="18sp"
+        android:fontFamily="monospace"
+        android:backgroundTint="#444444"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttonLayout" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </ScrollView>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_primary"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/labelTeamSession"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Team Session"
+        android:textColor="@color/text_primary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Status row -->
+    <View
+        android:id="@+id/statusDot"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/circle_dot"
+        app:layout_constraintTop_toBottomOf="@id/labelTeamSession"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/textStatus" />
+
+    <TextView
+        android:id="@+id/textStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="8dp"
+        android:text="Not connected"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toBottomOf="@id/labelTeamSession"
+        app:layout_constraintStart_toEndOf="@id/statusDot" />
+
+    <!-- QR code -->
+    <ImageView
+        android:id="@+id/imageQrCode"
+        android:layout_width="240dp"
+        android:layout_height="240dp"
+        android:layout_marginTop="24dp"
+        android:contentDescription="Session QR Code"
+        android:scaleType="fitCenter"
+        app:layout_constraintTop_toBottomOf="@id/textStatus"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Session ID label -->
+    <TextView
+        android:id="@+id/textSessionId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="No session"
+        android:textColor="#888888"
+        android:textSize="12sp"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toBottomOf="@id/imageQrCode"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Buttons -->
+    <Button
+        android:id="@+id/buttonNewSession"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="8dp"
+        android:text="New Session"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toBottomOf="@id/textSessionId"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/buttonRestoreSession" />
+
+    <Button
+        android:id="@+id/buttonRestoreSession"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Restore"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toBottomOf="@id/textSessionId"
+        app:layout_constraintStart_toEndOf="@id/buttonNewSession"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Device label -->
+    <TextView
+        android:id="@+id/labelDeviceName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Device label"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toBottomOf="@id/buttonNewSession"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <EditText
+        android:id="@+id/editDeviceName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:hint="e.g. Driver, Box"
+        android:inputType="text"
+        android:textColor="@color/text_primary"
+        android:textColorHint="#888888"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toBottomOf="@id/labelDeviceName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

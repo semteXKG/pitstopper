@@ -6,6 +6,7 @@ import at.semmal.pitstopper.livetiming.DemoSpeedHiveManager;
 import at.semmal.pitstopper.livetiming.SpeedHiveManager;
 import at.semmal.pitstopper.model.LiveTimingData;
 import at.semmal.pitstopper.mqtt.MqttClientManager;
+import at.semmal.pitstopper.mqtt.ExternalSessionManager;
 import at.semmal.pitstopper.timing.PitWindowAlertManager;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 import at.semmal.pitstopper.ui.CenterModule;
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
     // MQTT
     private MqttClientManager mqttClientManager;
     private MqttClientManager.StateListener mqttButtonsListener;
+    private ExternalSessionManager externalSessionManager;
     
     // SpeedHive Live Timing UI
     private LinearLayout liveTimingPanel;
@@ -138,6 +140,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Grab shared MQTT manager
         mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
+        externalSessionManager = ((PitStopperApplication) getApplication()).getExternalSessionManager();
+
+        // Handle deep link join (pitstopper://join?session=...)
+        handleSessionDeepLink(getIntent());
 
         // Initialize preferences
         preferences = new PitWindowPreferences(this);
@@ -284,6 +290,10 @@ public class MainActivity extends AppCompatActivity {
         // Subscribe to physical button events
         subscribeToButtons();
 
+        // Register for external session events
+        externalSessionManager.setEventListener((eventType, from, ts) ->
+                showSessionEventBanner(eventType, from));
+
         // Start updating the clock when activity becomes visible
         updateTime(); // Update immediately
         handler.postDelayed(updateTimeRunnable, 1000);
@@ -333,6 +343,38 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        handleSessionDeepLink(intent);
+    }
+
+    private void handleSessionDeepLink(android.content.Intent intent) {
+        if (intent == null) return;
+        android.net.Uri data = intent.getData();
+        if (data == null) return;
+        String session = data.getQueryParameter("session");
+        if (session == null || session.isEmpty()) return;
+        Log.i(TAG, "Deep link: joining session " + session.substring(0, 8) + "...");
+        preferences.saveSessionId(session);
+        externalSessionManager.disconnect();
+        externalSessionManager.connect(session);
+        Toast.makeText(this, "Joined team session", Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Show a brief banner overlay when an event arrives from another device.
+     */
+    private void showSessionEventBanner(String eventType, String from) {
+        String label;
+        switch (eventType) {
+            case "PIT_PRESSED": label = "🏎 PIT — from " + from; break;
+            case "ALARM":       label = "🚨 ALARM — from " + from; break;
+            default:            label = eventType + " — from " + from;
+        }
+        Toast.makeText(this, label, Toast.LENGTH_LONG).show();
+    }
+
     /**
      * Subscribe to fiesta/buttons MQTT topic to receive physical button events.
      * Subscribes immediately if already connected, otherwise waits for connection.
@@ -355,12 +397,23 @@ public class MainActivity extends AppCompatActivity {
             JSONObject json = new JSONObject(new String(payload));
             String button = json.optString("button", "");
             String state = json.optString("state", "");
-            if ("PIT".equals(button) && "PRESSED".equals(state)) {
-                runOnUiThread(this::onPitButtonPressed);
+            if ("PRESSED".equals(state)) {
+                if ("PIT".equals(button)) {
+                    runOnUiThread(this::onPitButtonPressed);
+                    publishSessionEvent("PIT_PRESSED");
+                } else if ("ALARM".equals(button)) {
+                    publishSessionEvent("ALARM");
+                }
             }
         } catch (JSONException e) {
             Log.w(TAG, "Failed to parse button message: " + e.getMessage());
         }
+    }
+
+    private void publishSessionEvent(String eventType) {
+        String label = preferences.getDeviceLabel();
+        if (label == null || label.isEmpty()) label = "Device";
+        externalSessionManager.publishEvent(eventType, label);
     }
 
     private void onPitButtonPressed() {
