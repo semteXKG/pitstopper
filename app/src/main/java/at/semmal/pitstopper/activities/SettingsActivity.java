@@ -42,6 +42,7 @@ public class SettingsActivity extends AppCompatActivity {
     private Button buttonSelectTime;
     private EditText editPitWindowOpens;
     private EditText editPitWindowDuration;
+    private EditText editMinPitStop;
     private Button buttonSave;
     private Button buttonCancel;
     
@@ -93,6 +94,7 @@ public class SettingsActivity extends AppCompatActivity {
         buttonSelectTime = findViewById(R.id.buttonSelectTime);
         editPitWindowOpens = findViewById(R.id.editPitWindowOpens);
         editPitWindowDuration = findViewById(R.id.editPitWindowDuration);
+        editMinPitStop = findViewById(R.id.editMinPitStop);
         buttonSave = findViewById(R.id.buttonSave);
         buttonCancel = findViewById(R.id.buttonCancel);
         
@@ -195,6 +197,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         editPitWindowOpens.setText(String.valueOf(preferences.getPitWindowOpens()));
         editPitWindowDuration.setText(String.valueOf(preferences.getPitWindowDuration()));
+        editMinPitStop.setText(String.valueOf(preferences.getMinPitStopSeconds()));
         
         // Load car number for SpeedHive live mode - demo mode uses spinner
         editCarNumber.setText(preferences.getSpeedHiveCarNumber());
@@ -469,6 +472,7 @@ public class SettingsActivity extends AppCompatActivity {
         try {
             int pitWindowOpens = Integer.parseInt(editPitWindowOpens.getText().toString());
             int pitWindowDuration = Integer.parseInt(editPitWindowDuration.getText().toString());
+            int minPitStop = Integer.parseInt(editMinPitStop.getText().toString());
 
             // Validate inputs
             if (pitWindowOpens < 0 || pitWindowOpens > 300) {
@@ -481,8 +485,14 @@ public class SettingsActivity extends AppCompatActivity {
                 return;
             }
 
+            if (minPitStop < 1 || minPitStop > 600) {
+                Toast.makeText(this, "Min. pit stop must be between 1 and 600 seconds", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             // Save to SharedPreferences
             preferences.saveAll(raceStartHour, raceStartMinute, pitWindowOpens, pitWindowDuration);
+            preferences.saveMinPitStopSeconds(minPitStop);
             
             // Save SpeedHive settings
             saveSpeedHiveSettings();

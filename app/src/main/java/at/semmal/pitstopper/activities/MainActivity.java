@@ -5,9 +5,11 @@ import at.semmal.pitstopper.gps.StandstillDetector;
 import at.semmal.pitstopper.livetiming.DemoSpeedHiveManager;
 import at.semmal.pitstopper.livetiming.SpeedHiveManager;
 import at.semmal.pitstopper.model.LiveTimingData;
+import at.semmal.pitstopper.mqtt.MqttClientManager;
 import at.semmal.pitstopper.timing.PitWindowAlertManager;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 import at.semmal.pitstopper.ui.CenterModule;
+import at.semmal.pitstopper.ui.CountdownModule;
 import at.semmal.pitstopper.ui.CustomModule;
 import at.semmal.pitstopper.ui.PitTimerModule;
 
@@ -29,6 +31,9 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -60,7 +65,13 @@ public class MainActivity extends AppCompatActivity {
     // Center modules
     private PitTimerModule pitTimerModule;
     private CustomModule customModule;
+    private CountdownModule countdownModule;
     private CenterModule activeModule;
+    private CenterModule preCountdownModule; // module to restore after pit stop
+
+    // MQTT
+    private MqttClientManager mqttClientManager;
+    private MqttClientManager.StateListener mqttButtonsListener;
     
     // SpeedHive Live Timing UI
     private LinearLayout liveTimingPanel;
@@ -116,11 +127,17 @@ public class MainActivity extends AppCompatActivity {
         // Initialize center modules
         pitTimerModule = new PitTimerModule(this);
         customModule = new CustomModule(this);
+        countdownModule = new CountdownModule(this);
         centerModuleContainer.addView(pitTimerModule);
         centerModuleContainer.addView(customModule);
+        centerModuleContainer.addView(countdownModule);
         activeModule = pitTimerModule;
         pitTimerModule.onActivate();
         customModule.onDeactivate();
+        countdownModule.onDeactivate();
+
+        // Grab shared MQTT manager
+        mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
 
         // Initialize preferences
         preferences = new PitWindowPreferences(this);
@@ -180,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
                 if (e1 == null || e2 == null) return false;
+                if (activeModule == countdownModule) return false; // locked during pit stop
                 float deltaY = e2.getY() - e1.getY();
                 if (Math.abs(deltaY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
                     toggleModule(deltaY < 0);
@@ -263,6 +281,9 @@ public class MainActivity extends AppCompatActivity {
         // Initialize SpeedHive based on settings
         initializeSpeedHive();
 
+        // Subscribe to physical button events
+        subscribeToButtons();
+
         // Start updating the clock when activity becomes visible
         updateTime(); // Update immediately
         handler.postDelayed(updateTimeRunnable, 1000);
@@ -277,6 +298,15 @@ public class MainActivity extends AppCompatActivity {
         // Stop SpeedHive polling and session checking
         handler.removeCallbacks(speedHivePollingRunnable);
         handler.removeCallbacks(sessionCheckRunnable);
+
+        // Cancel any active pit stop countdown
+        countdownModule.cancelCountdown();
+
+        // Unsubscribe MQTT button listener
+        if (mqttButtonsListener != null) {
+            mqttClientManager.removeStateListener(mqttButtonsListener);
+            mqttButtonsListener = null;
+        }
 
         // Stop GPS monitoring to save battery
         if (standstillDetector != null) {
@@ -304,33 +334,85 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Toggle between the two center modules with a scroll-like slide animation.
-     * @param swipeUp true if the user swiped up (outgoing slides up, incoming slides from below)
+     * Subscribe to fiesta/buttons MQTT topic to receive physical button events.
+     * Subscribes immediately if already connected, otherwise waits for connection.
      */
-    private void toggleModule(boolean swipeUp) {
+    private void subscribeToButtons() {
+        if (mqttClientManager.isConnected()) {
+            mqttClientManager.subscribe("fiesta/buttons", this::handleButtonMessage);
+        } else {
+            mqttButtonsListener = (state, error) -> {
+                if (state == MqttClientManager.State.CONNECTED) {
+                    mqttClientManager.subscribe("fiesta/buttons", this::handleButtonMessage);
+                }
+            };
+            mqttClientManager.addStateListener(mqttButtonsListener);
+        }
+    }
+
+    private void handleButtonMessage(byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            String button = json.optString("button", "");
+            String state = json.optString("state", "");
+            if ("PIT".equals(button) && "PRESSED".equals(state)) {
+                runOnUiThread(this::onPitButtonPressed);
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Failed to parse button message: " + e.getMessage());
+        }
+    }
+
+    private void onPitButtonPressed() {
+        if (activeModule == countdownModule) {
+            // Already counting down — restart from full duration
+            countdownModule.startCountdown(preferences.getMinPitStopSeconds(), this::onPitCountdownFinished);
+            Log.i(TAG, "PIT button pressed — restarting countdown");
+            return;
+        }
+        preCountdownModule = activeModule;
+        Log.i(TAG, "PIT button pressed — starting pit stop countdown");
+        switchToModule(countdownModule, false);
+        countdownModule.startCountdown(preferences.getMinPitStopSeconds(), this::onPitCountdownFinished);
+    }
+
+    private void onPitCountdownFinished() {
+        Log.i(TAG, "Pit stop countdown finished — returning to previous module");
+        CenterModule returnTo = (preCountdownModule != null) ? preCountdownModule : pitTimerModule;
+        switchToModule(returnTo, true);
+        preCountdownModule = null;
+    }
+
+    /** Animate to a specific module (not part of the swipe cycle). */
+    private void switchToModule(CenterModule target, boolean swipeUp) {
+        if (activeModule == target) return;
         CenterModule outgoing = activeModule;
-        CenterModule incoming = (outgoing == pitTimerModule) ? customModule : pitTimerModule;
         int h = centerModuleContainer.getHeight();
-        int outY = swipeUp ? -h : h;
 
-        // Position incoming module off-screen, then make it visible
-        incoming.setTranslationY(swipeUp ? h : -h);
-        incoming.onActivate();
+        target.setTranslationY(swipeUp ? h : -h);
+        target.onActivate();
 
-        // Slide outgoing module out; hide it only after animation completes
         outgoing.animate()
-                .translationY(outY)
+                .translationY(swipeUp ? -h : h)
                 .setDuration(300)
                 .withEndAction(outgoing::onDeactivate)
                 .start();
 
-        // Slide incoming module into place
-        incoming.animate()
+        target.animate()
                 .translationY(0)
                 .setDuration(300)
                 .start();
 
-        activeModule = incoming;
+        activeModule = target;
+    }
+
+    /**
+     * Toggle between the two swipeable center modules with a scroll-like slide animation.
+     * @param swipeUp true if the user swiped up (outgoing slides up, incoming slides from below)
+     */
+    private void toggleModule(boolean swipeUp) {
+        CenterModule incoming = (activeModule == pitTimerModule) ? customModule : pitTimerModule;
+        switchToModule(incoming, swipeUp);
     }
 
     private void updateTime() {

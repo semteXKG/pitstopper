@@ -5,6 +5,7 @@
     <string name="race_start_time">Race Start Time</string>
     <string name="pit_window_opens_after">Pit Window Opens After (minutes)</string>
     <string name="pit_window_duration">Pit Window Duration (minutes)</string>
+    <string name="min_pit_stop">Min. Pit Stop (s)</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="select_time">Select Time</string>

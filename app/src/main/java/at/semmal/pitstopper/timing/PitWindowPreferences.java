@@ -41,8 +41,9 @@ public class PitWindowPreferences {
     private static final String DEFAULT_SPEEDHIVE_CAR_NUMBER = "";
     private static final String DEFAULT_SPEEDHIVE_CAR_NAME = "";
     
-    // MQTT remote broker defaults
-    private static final String DEFAULT_MQTT_HOST = "broker";
+    // Pit stop duration
+    private static final String KEY_MIN_PIT_STOP_SECONDS = "min_pit_stop_seconds";
+    private static final int DEFAULT_MIN_PIT_STOP_SECONDS = 60;
     private static final int DEFAULT_MQTT_PORT = 1883;
     private static final boolean DEFAULT_MQTT_ENABLED = false;
     
@@ -205,6 +206,14 @@ public class PitWindowPreferences {
 
     public boolean isDemoMode() {
         return SPEEDHIVE_MODE_DEMO.equals(getSpeedHiveMode());
+    }
+
+    public int getMinPitStopSeconds() {
+        return prefs.getInt(KEY_MIN_PIT_STOP_SECONDS, DEFAULT_MIN_PIT_STOP_SECONDS);
+    }
+
+    public void saveMinPitStopSeconds(int seconds) {
+        prefs.edit().putInt(KEY_MIN_PIT_STOP_SECONDS, seconds).apply();
     }
 
     // Convenience method to get race start time as formatted string
