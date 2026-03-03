@@ -1,4 +1,8 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.adapters;
+
+import at.semmal.pitstopper.R;
+import at.semmal.pitstopper.model.SpeedHiveSession;
+import at.semmal.pitstopper.timing.PitWindowPreferences;
 
 import android.content.Context;
 import android.view.LayoutInflater;

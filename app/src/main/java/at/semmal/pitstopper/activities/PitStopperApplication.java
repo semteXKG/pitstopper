@@ -1,4 +1,7 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.activities;
+
+import at.semmal.pitstopper.mqtt.MqttClientManager;
+import at.semmal.pitstopper.timing.PitWindowPreferences;
 
 import android.app.Application;
 import android.util.Log;

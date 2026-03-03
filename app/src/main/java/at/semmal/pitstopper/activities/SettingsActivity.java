@@ -1,4 +1,13 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.activities;
+
+import at.semmal.pitstopper.R;
+import at.semmal.pitstopper.adapters.EventSpinnerAdapter;
+import at.semmal.pitstopper.adapters.SessionSpinnerAdapter;
+import at.semmal.pitstopper.livetiming.SpeedHiveManager;
+import at.semmal.pitstopper.model.SpeedHiveEvent;
+import at.semmal.pitstopper.model.SpeedHiveSession;
+import at.semmal.pitstopper.mqtt.MqttClientManager;
+import at.semmal.pitstopper.timing.PitWindowPreferences;
 
 import android.app.TimePickerDialog;
 import android.graphics.Color;

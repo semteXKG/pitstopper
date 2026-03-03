@@ -1,4 +1,6 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.livetiming;
+
+import at.semmal.pitstopper.model.LiveTimingData;
 
 import android.content.Context;
 import android.util.Log;

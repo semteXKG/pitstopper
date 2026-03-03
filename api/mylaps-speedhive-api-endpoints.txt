@@ -1,0 +1,445 @@
+MYLAPS SPEEDHIVE API ENDPOINTS ANALYSIS
+=======================================
+Decompiled from: mylaps-speedhive-1-68.apk
+Date: 2026-02-10 19:44
+Updated: 2026-02-10 21:57 (Added response format documentation)
+
+BASE URLs (from SpeedhiveConstants.java):
+==========================================
+1. API Gateway:           https://api-gateway.mylaps.com/
+2. Event Results API:     https://eventresults-api.speedhive.com/api/v0.2.3/
+3. Live Timing V3 API:    https://lt-api.speedhive.com/api/
+4. Live Timing SignalR:   https://notifications.speedhive.com/
+5. Practice API:          https://practice-api.speedhive.com/
+6. Push Notifications:    https://push-notifications.speedhive.com/
+7. Search V2 API:         https://search.speedhive.com/
+8. Users & Products API:  https://usersandproducts-api.speedhive.com/
+9. Website API:           https://speedhive.mylaps.com/
+10. B2C OAuth:            https://mylapsb2cprd.b2clogin.com/mylapsb2cprd.onmicrosoft.com/B2C_1A_SIGNUP_SIGNIN/
+
+DETAILED API ENDPOINTS:
+=======================
+
+I. MYLAPS GATEWAY API (api-gateway.mylaps.com)
+-----------------------------------------------
+   GET    /time
+   GET    /account/countries
+   GET    /transponder/{transponderNumber}/license
+   GET    /transponder/{transponderNumber}/signedtime?nonce={nonce}
+   GET    /version/tr2Firmware/transponder/{transponderNumber}
+   GET    /version/tr2dpFirmware/transponder/{transponderNumber}
+   GET    /version/x2LinkFirmware/racelink/{serial}
+   GET    /products/{transponderNumber}/0?fields=ownerinfo,subscriptions
+   POST   /transponder/{transponderNumber}/claim/b2c/{userId}
+   POST   /diagnostics/
+   GET    {URL} (generic file download)
+
+II. LIVE TIMING API (lt-api.speedhive.com/api/)
+------------------------------------------------
+   GET    /events
+   GET    /events?username={username}
+   GET    /events?sport={sport}&countrycode={country}&recent={recent}
+   GET    /events/{eventId}?sessions=trueKK
+   GET    /events/{eventId}/trackmap
+   GET    /events/{eventId}/sessions/{sessionId}/data
+   GET    /events/{eventId}/sessions/{sessionId}/stats
+   GET    /events/{eventId}/sessions/{sessionId}/announcements
+   GET    /events/{eventId}/sessions/{sessionId}/competitor/{competitorId}
+
+III. EVENT RESULTS API (eventresults-api.speedhive.com/api/v0.2.3/)
+--------------------------------------------------------------------
+   GET    /eventresults/events?sportCategory={cat}&sport={sport}&country={country}&count={count}&offset={offset}&startDate={start}&endDate={end}
+   GET    /eventresults/events/{eventId}?guid={guid}&sessions={bool}
+   GET    /eventresults/sessions/{sessionId}
+   GET    /eventresults/sessions/{sessionId}/classification
+   GET    /eventresults/sessions/{sessionId}/lapchart
+   GET    /eventresults/sessions/{sessionId}/lapdata/{finishPosition}/laps
+   GET    /eventresults/sessions/{sessionId}/announcements
+   GET    /eventresults/accounts/{userId}/events?count={count}&offset={offset}&sportCategory={cat}
+
+IV. PRACTICE API (practice-api.speedhive.com/)
+-----------------------------------------------
+   GET    /api/v1/locations?sportCategory={cat}&sport={sport}&country={country}&status={status}
+   GET    /api/v1/locations/{id}
+   GET    /api/v1/locations/{id}/activities?year={year}&sport={sport}&count={count}&offset={offset}&order={order}
+   GET    /api/v1/training/activities/{id}?chips={bool}&sessions={bool}&order={order}
+   GET    /api/v1/training/activities/{id}/sessions?numlaps={num}
+   GET    /api/v1/accounts/{userId}/training/activities?count={count}&offset={offset}
+
+V. SEARCH V2 API (search.speedhive.com/)
+-----------------------------------------
+   GET    /api/search?term={term}&category={cat}&sport={sport}&type={type}&country={country}&count={count}&offset={offset}
+
+VI. USERS AND PRODUCTS API (usersandproducts-api.speedhive.com/)
+-----------------------------------------------------------------
+   A. Account Management:
+   GET    /api/v2/accounts/{userId}
+   GET    /api/v2/accounts/email/{email}
+   GET    /api/v2/accounts/{userId}/profiles
+   PUT    /api/v2/accounts/email
+   DELETE /api/v2/accounts/{userId}
+   
+   B. Avatar Management:
+   GET    /api/v2/accounts/{userId}/avatars
+   PUT    /api/v2/accounts/{userId}/avatars
+   DELETE /api/v2/accounts/{userId}/avatars
+   
+   C. Products & Chips:
+   GET    /api/v2/accounts/{userId}/products
+   GET    /api/v2/products/chips/code/{chipCode}
+   GET    /api/v2/products/chips/{chipCode}/account
+   POST   /api/v2/accounts/{userId}/products/chips/{chipNumber}
+   DELETE /api/v2/accounts/{userId}/products/chips/{chipNumber}
+   PUT    /api/v2/products/chips/chipnumber/name
+   DELETE /api/v2/products/chips/{chipNumber}/name
+   
+   D. Orders & Pricing:
+   GET    /api/v2/products/chips/price-list/{transponderId}?country={country}
+   GET    /api/v2/products/chips/price-list/{orderId}/status
+   POST   /api/v2/products/chips/price-list/order-request
+   
+   E. Profile & Social:
+   GET    /api/v1/speedhiveprofile/{userId}?profileId={pid}&friends={bool}&videos={bool}&includeAchievement={bool}&includeStatistics={bool}&cacheInvalidator={timestamp}
+   GET    /api/v1/speedhiveprofile/public/{profileId}?userId={uid}&friends={bool}&videos={bool}&includeAchievement={bool}&includeStatistics={bool}
+   GET    /api/v1/speedhiveprofile/public/tx/{transponder}?userId={uid}&friends={bool}
+   GET    /api/v1/speedhiveprofile/timeline/{profileId}
+   GET    /api/v1/speedhiveprofile/friends/{profileId}?userId={uid}
+   POST   /api/v1/speedhiveprofile/friends/follow/{userId}/{followUserId}?follow={bool}
+   POST   /api/v1/speedhiveprofile/privateprofile/{userId}/{privateProfile}
+   
+   F. Videos:
+   GET    /api/v1/speedhiveprofile/videos/{profileId}
+   GET    /api/v1/speedhiveprofile/videos/event/{eventId}
+   POST   /api/v1/speedhiveprofile/videos/add/{userId}
+   POST   /api/v1/speedhiveprofile/videos/add/{userId}/{videoId}
+   POST   /api/v1/speedhiveprofile/videos/delete/{userId}/{videoId}?eventId={eid}
+   
+   G. Achievements & Statistics:
+   GET    /api/v2/achievements/{profileId}/overview
+   GET    /api/v2/achievements/{profileId}/details?achievementType={type}
+   GET    /api/v2/achievements/{profileId}/statistics?lookupYear={year}
+   GET    /api/v2/achievements/{profileId}/statistics-filter
+   
+   H. Notifications Settings:
+   POST   /api/v1/speedhiveprofile/appnotify/{userId}/{appnotify}
+   POST   /api/v1/speedhiveprofile/emailnotify/{userId}/{emailnotify}
+   POST   /api/v1/speedhiveprofile/appnotify/sessionstarted/{userId}/{sessionstarted}
+   POST   /api/v1/speedhiveprofile/appnotify/eventspublished/{userId}/{eventspublished}
+   POST   /api/v1/speedhiveprofile/appnotify/friendsessionstarted/{userId}/{friendsessionstarted}
+   POST   /api/v1/speedhiveprofile/appnotify/friendeventspublished/{userId}/{friendeventspublished}
+   POST   /api/v1/speedhiveprofile/appnotify/friendfollowed/{userId}/{friendfollowed}
+   POST   /api/v1/speedhiveprofile/appnotify/productexpirewarning/{userId}/{productexpirewarning}
+
+AUTHENTICATION:
+===============
+- Uses Azure B2C OAuth 2.0 authentication
+- Client ID: Available in BuildConfig.B2C_client_id
+- Scope: https://mylapsb2cprd.onmicrosoft.com/speedhive-api/read
+- Authorization Endpoint: https://mylapsb2cprd.b2clogin.com/mylapsb2cprd.onmicrosoft.com/B2C_1A_SIGNUP_SIGNIN/
+
+COMMON HEADERS:
+===============
+- X-MYLAPS-Tvc-Code: Transponder verification code
+- X-MYLAPS-Transponder-Number: Transponder number
+- Authorization: Bearer token from B2C
+- requestId: Request identifier
+
+ADDITIONAL URLS:
+================
+- Account Portal:      https://account.mylaps.com/en/products
+- SpeedHive Shop:      https://speedhiveshop.mylaps.com/
+- Help Center:         https://help.mylaps.com/
+- Facebook:            http://m.facebook.com/mylapsspeedhive
+- RSS News Feed:       https://www.motorsport.com/rss/all/news/
+- YouTube Thumbnails:  https://img.youtube.com/vi/{videoId}/mqdefault.jpg
+
+API RESPONSE FORMATS:
+=====================
+
+I. LIVE TIMING API - GET /events
+---------------------------------
+Returns list of live events with abbreviated field names.
+
+Response Structure:
+{
+  "LiveEvents": [
+    {
+      "id": string,              // Event ID (e.g., "QMJLNRVR-2147484360")
+      "n": string,               // Event name
+      "pyt": number,             // Payment type (0=free, 2=paid, etc.)
+      "s": number,               // Status (100=scheduled, 101=practice, 102=active, 104=completed, 107=cancelled)
+      "f": number,               // Sport/Format (0=general, 3=karting, 4=motorcycles, etc.)
+      "dt": string,              // Date/time (format: "DD-MM-YYYY HH:mm:ss.SSS")
+      "l": {                     // Location object
+        "c": string,             // Country name
+        "cc": string,            // Country code (ISO 2-letter)
+        "ct": string,            // City/region
+        "lat": number,           // Latitude (optional)
+        "lon": number            // Longitude (optional)
+      },
+      "u": string,               // User/organizer email
+      "ov": string,              // Orbits version (timing software)
+      "t": {                     // Track object
+        "id": string,            // Track ID
+        "n": string,             // Track name
+        "l": number,             // Track length
+        "um": string             // Unit of measure ("km" or "mi")
+      },
+      "w": {                     // Weather object (optional, only if available)
+        "t": number,             // Temperature
+        "ts": string,            // Timestamp
+        "pi": number,            // Precipitation
+        "pp": number,            // Precipitation probability
+        "ty": number             // Weather type
+      }
+    }
+  ]
+}
+
+Status Codes:
+- 100: Scheduled (not started)
+- 101: Practice/Testing
+- 102: Active (live timing available)
+- 104: Completed
+- 107: Cancelled
+
+Sport Codes:
+- 0: General/Unspecified
+- 3: Karting
+- 4: Motorcycles/Motocross
+- (other codes vary by discipline)
+
+
+II. LIVE TIMING API - GET /events/{eventId}?sessions=true
+----------------------------------------------------------
+Returns event details with sessions list.
+
+Response Structure:
+{
+  "id": string,                  // Event ID
+  "n": string,                   // Event name
+  "pyt": number,                 // Payment type
+  "s": number,                   // Status code
+  "f": number,                   // Sport/format
+  "dt": string,                  // Date/time
+  "l": {                         // Location object (same as above)
+    "c": string,
+    "cc": string,
+    "ct": string
+  },
+  "u": string,                   // Organizer email
+  "ov": string,                  // Orbits version
+  "t": {                         // Track object (same as above)
+    "id": string,
+    "n": string,
+    "l": number,
+    "um": string
+  },
+  "ss": [                        // Sessions array
+    {
+      "id": string,              // Session ID (e.g., "EVENTID-1073741830")
+      "eId": string,             // Event ID (parent)
+      "eNam": string,            // Event name
+      "f": number,               // Sport/format
+      "rnTp": number,            // Run type (1=race, 2=practice, etc.)
+      "gNam": string,            // Group name (class/category)
+      "ls": number,              // Lap count/status
+      "lsTg": number,            // Lap target
+      "rnNam": string,           // Run name (e.g., "Day 1", "Heat 1")
+      "stod": string,            // Start of day timestamp
+      "btLpTim": string,         // Best lap time (format: "MM:SS.mmm", optional)
+      "rcTm": string             // Race time duration (format: "HH:MM:SS.mmm", optional)
+    }
+  ]
+}
+
+
+III. LIVE TIMING API - GET /events/{eventId}/sessions/{sessionId}/data
+-----------------------------------------------------------------------
+Returns session data with leaderboard (NOT just "competitors").
+
+Response Structure:
+{
+  "id": string,                  // Session ID
+  "l": [                         // Leaderboard array (NOT 'c' for competitors!)
+    {
+      "id": number,              // Competitor ID
+      "no": string,              // Number (car/kart/bike number)
+      "nam": string,             // Name
+      "btTm": string,            // Best Time (format: "M:SS.mmm")
+      "ls": number,              // Laps completed
+      "pos": number,             // Overall position
+      "cl": string,              // Class/category
+      "pCl": number,             // Position in class
+      "btCl": boolean,           // Is best time in class
+      "gp": string,              // Gap to competitor IN FRONT (previous position)
+      "df": string,              // Total gap/difference to LEADER (P1)
+      "gpCl": string,            // Gap to class leader
+      "dfCl": string,            // Difference to previous in class
+      "lbpos": number            // Last best position
+    }
+  ]
+}
+
+Gap Field Explanation:
+- "gp" (Gap) = Gap to the competitor IN FRONT (previous position)
+- "df" (Difference) = Total gap to the LEADER (P1)
+- To get gap BEHIND: Use the next position's "gp" field
+  Example: For P2, gap behind = P3's "gp" value
+
+Real Example from Session:
+- P2: gp = "2 Laps" (2 laps behind P1), df = "2 Laps" (2 laps to leader)
+- P3: gp = "17 Laps" (17 laps behind P2), df = "19 Laps" (19 laps to leader)
+
+
+IV. LIVE TIMING API - GET /events/{eventId}/sessions/{sessionId}/competitor/{competitorId}
+-------------------------------------------------------------------------------------------
+Returns detailed lap-by-lap data for specific competitor.
+
+Response Structure:
+{
+  "results": [                   // Array of lap results (one per lap)
+    {
+      "id": number,              // Competitor ID
+      "ibt": false,              // Is Best Time flag (true for best lap)
+      "btCl": false,             // Best Time in Class flag
+      "gp": 5.680,               // Gap to leader (seconds)
+      "df": 6.486,               // Difference to previous (seconds)
+      "gpCl": 5.680,             // Gap to class leader
+      "dfCl": 6.486,             // Difference to previous in class
+      "lsTm": "1:35.485",        // Lap Time for this lap (format: "M:SS.mmm")
+      "ls": 1,                   // Lap number
+      "lbpos": 0,                // Last best position
+      "pCl": 3,                  // Position in class
+      "pos": 3,                  // Overall position at this lap
+      "cl": "SUPERBIKE"          // Class/category
+    },
+    ... (one entry per lap)
+    {
+      "id": 16506829,
+      "ibt": true,               // ⭐ Best lap marked with ibt: true
+      "btCl": false,
+      "gp": 0.000,
+      "df": 0.000,
+      "lsTm": "1:27.697",        // This lap's time (also the best)
+      "ls": 19,                  // Lap number
+      "btTm": "1:27.697",        // Best Time overall (only in last/summary entry)
+      "btLp": 19,                // Best Lap number (only in last/summary entry)
+      "nam": "MLUNGO",           // Name (only in last/summary entry)
+      "no": "88",                // Number (only in last/summary entry)
+      "pos": 1,                  // Final position
+      "cl": "SUPERBIKE"
+    }
+  ]
+}
+
+Structure Notes:
+- Each lap is a separate entry in 'results' array
+- The lap with 'ibt: true' is the best lap
+- The LAST entry contains summary data:
+  - 'nam' (name), 'no' (number) fields
+  - 'btTm' (best time), 'btLp' (best lap number)
+  - Total laps in 'ls' field
+- Position changes throughout race tracked in 'pos' field of each lap
+
+
+FIELD NAME ABBREVIATIONS:
+=========================
+Common abbreviations used throughout the API:
+
+Session & Event Fields:
+- bt: Best Time
+- btCl: Best Time in Class (boolean)
+- btLp: Best Lap number
+- btLpTim: Best Lap Time
+- btTm: Best Time (formatted string)
+- c: Country (in location context)
+- cc: Country Code
+- cl: Class/Category
+- ct: City
+- df: Difference (to previous competitor)
+- dfCl: Difference in Class
+- dt: Date/Time
+- eId: Event ID
+- eNam: Event Name
+- f: Format/Sport code
+- gNam: Group Name
+- gp: Gap (to leader)
+- gpCl: Gap in Class
+- ibt: Is Best Time (boolean flag)
+- id: ID (event, session, or competitor)
+- l: Location object OR Laps/Leaderboard array (context-dependent)
+- lbpos: Last Best Position
+- ls: Laps (count or lap number depending on context)
+- lsTg: Laps Target
+- lsTm: Last/Lap Time (time for specific lap)
+- n: Name
+- nam: Name (competitor)
+- no: Number (competitor/car/bike number)
+- ov: Orbits Version
+- pCl: Position in Class
+- pos: Position (overall)
+- pyt: Payment Type
+- rcTm: Race Time (duration)
+- rnNam: Run Name
+- rnTp: Run Type
+- s: Status code
+- ss: Sessions array
+- stod: Start of Day
+- t: Track object OR Temperature
+- u: User/Organizer
+- um: Unit of Measure
+- w: Weather object
+
+Time Formats:
+- Lap times: "M:SS.mmm" (e.g., "1:27.697")
+- Race duration: "HH:MM:SS.mmm" or "MM:SS.mmm"
+- Date/time: "DD-MM-YYYY HH:mm:ss.SSS"
+- dt: Date/Time
+- eId: Event ID
+- eNam: Event Name
+- f: Format/Sport
+- gNam: Group Name
+- id: Identifier
+- l: Location/Length/Laps (context dependent)
+- lc: Lap Count
+- ln: Lap Number
+- ls: Lap Status/Count
+- lsTg: Lap Target
+- lt: Lap Time
+- n: Name
+- ov: Orbits Version
+- pos: Position
+- pyt: Payment Type
+- rcTm: Race Time
+- rnNam: Run Name
+- rnTp: Run Type
+- s: Status
+- ss: Sessions
+- stod: Start of Day
+- t: Track/Temperature (context dependent)
+- u: User/Organizer
+- um: Unit of Measure
+- w: Weather
+
+
+TIME FORMAT:
+============
+- Timestamps: "DD-MM-YYYY HH:mm:ss.SSS" (24-hour format)
+- Lap times: "MM:SS.mmm" or "M:SS.mmm" (minutes:seconds.milliseconds)
+- Race duration: "HH:MM:SS.mmm" (hours:minutes:seconds.milliseconds)
+
+
+AUTHENTICATION UPDATE:
+======================
+Live Timing API (and other public endpoints) only require the API key.
+OAuth Bearer token is only needed for user-specific endpoints (profile, products, etc.).
+
+Required Headers:
+- ApiKey: XwUk3LPlUzq9n3LzI8butzLYm6vDFXP1
+- User-Agent: speedhive-android/1.68
+
+Optional but recommended:
+- Accept: application/json
+
+

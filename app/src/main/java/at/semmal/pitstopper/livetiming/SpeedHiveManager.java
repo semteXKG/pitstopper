@@ -1,4 +1,10 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.livetiming;
+
+import at.semmal.pitstopper.model.LiveTimingData;
+import at.semmal.pitstopper.model.SpeedHiveCar;
+import at.semmal.pitstopper.model.SpeedHiveConfig;
+import at.semmal.pitstopper.model.SpeedHiveEvent;
+import at.semmal.pitstopper.model.SpeedHiveSession;
 
 import android.content.Context;
 import android.util.Log;

@@ -1,4 +1,4 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.mqtt;
 
 import android.util.Log;
 

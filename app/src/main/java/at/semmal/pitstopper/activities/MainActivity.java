@@ -1,4 +1,15 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.activities;
+
+import at.semmal.pitstopper.R;
+import at.semmal.pitstopper.gps.StandstillDetector;
+import at.semmal.pitstopper.livetiming.DemoSpeedHiveManager;
+import at.semmal.pitstopper.livetiming.SpeedHiveManager;
+import at.semmal.pitstopper.model.LiveTimingData;
+import at.semmal.pitstopper.timing.PitWindowAlertManager;
+import at.semmal.pitstopper.timing.PitWindowPreferences;
+import at.semmal.pitstopper.ui.CenterModule;
+import at.semmal.pitstopper.ui.CustomModule;
+import at.semmal.pitstopper.ui.PitTimerModule;
 
 import android.Manifest;
 import android.content.Intent;
@@ -9,6 +20,8 @@ import android.os.Looper;
 import android.text.SpannableString;
 import android.text.style.RelativeSizeSpan;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -35,16 +48,19 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "PitStopper";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
-    private TextView textCurrentTime;
-    private TextView textCountdown;
-    private TextView textEventSession; // NEW: Event/Session display
     private ImageButton buttonSettings;
     private ConstraintLayout rootLayout;
     private View progressBar;
     private FrameLayout progressBarContainer;
+    private FrameLayout centerModuleContainer;
     private Handler handler;
     private Runnable updateTimeRunnable;
     private SimpleDateFormat timeFormat;
+
+    // Center modules
+    private PitTimerModule pitTimerModule;
+    private CustomModule customModule;
+    private CenterModule activeModule;
     
     // SpeedHive Live Timing UI
     private LinearLayout liveTimingPanel;
@@ -85,19 +101,26 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Initialize views
-        textCurrentTime = findViewById(R.id.textCurrentTime);
-        textCountdown = findViewById(R.id.textCountdown);
-        textEventSession = findViewById(R.id.textEventSession); // NEW: Event/Session display
         buttonSettings = findViewById(R.id.buttonSettings);
         rootLayout = findViewById(R.id.rootLayout);
         progressBar = findViewById(R.id.progressBar);
         progressBarContainer = findViewById(R.id.progressBarContainer);
+        centerModuleContainer = findViewById(R.id.centerModuleContainer);
         
         // Initialize SpeedHive UI elements
         liveTimingPanel = findViewById(R.id.liveTimingPanel);
         textPosition = findViewById(R.id.textPosition);
         textGapAhead = findViewById(R.id.textGapAhead);
         textGapBehind = findViewById(R.id.textGapBehind);
+
+        // Initialize center modules
+        pitTimerModule = new PitTimerModule(this);
+        customModule = new CustomModule(this);
+        centerModuleContainer.addView(pitTimerModule);
+        centerModuleContainer.addView(customModule);
+        activeModule = pitTimerModule;
+        pitTimerModule.onActivate();
+        customModule.onDeactivate();
 
         // Initialize preferences
         preferences = new PitWindowPreferences(this);
@@ -143,6 +166,32 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             startActivity(intent);
         });
+
+        // Swipe up or down on the center module container to toggle between modules
+        GestureDetector swipeDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_THRESHOLD = 100;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true; // required for onFling to be delivered
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+                float deltaY = e2.getY() - e1.getY();
+                if (Math.abs(deltaY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                    toggleModule(deltaY < 0);
+                    return true;
+                }
+                return false;
+            }
+        });
+        centerModuleContainer.setClickable(true); // ensures touch events reach the container
+        centerModuleContainer.setClipChildren(false); // allow modules to slide outside container bounds
+        rootLayout.setClipChildren(false);           // allow container children to slide past its edge
+        centerModuleContainer.setOnTouchListener((v, event) -> swipeDetector.onTouchEvent(event));
 
         // Initialize StandstillDetector for GPS-based pit stop detection
         standstillDetector = new StandstillDetector(this, new StandstillDetector.StandstillListener() {
@@ -254,6 +303,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Toggle between the two center modules with a scroll-like slide animation.
+     * @param swipeUp true if the user swiped up (outgoing slides up, incoming slides from below)
+     */
+    private void toggleModule(boolean swipeUp) {
+        CenterModule outgoing = activeModule;
+        CenterModule incoming = (outgoing == pitTimerModule) ? customModule : pitTimerModule;
+        int h = centerModuleContainer.getHeight();
+        int outY = swipeUp ? -h : h;
+
+        // Position incoming module off-screen, then make it visible
+        incoming.setTranslationY(swipeUp ? h : -h);
+        incoming.onActivate();
+
+        // Slide outgoing module out; hide it only after animation completes
+        outgoing.animate()
+                .translationY(outY)
+                .setDuration(300)
+                .withEndAction(outgoing::onDeactivate)
+                .start();
+
+        // Slide incoming module into place
+        incoming.animate()
+                .translationY(0)
+                .setDuration(300)
+                .start();
+
+        activeModule = incoming;
+    }
+
     private void updateTime() {
         // Get current time
         Calendar now = Calendar.getInstance();
@@ -263,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Update time display
         String currentTime = timeFormat.format(now.getTime());
-        textCurrentTime.setText(currentTime);
+        pitTimerModule.updateTime(currentTime);
 
         // Check alert state
         PitWindowAlertManager.AlertState alertState = alertManager.getAlertState(currentHour, currentMinute);
@@ -293,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
                 long remainingMillis = windowEnd.getTimeInMillis() - now.getTimeInMillis();
                 int remainingMinutes = (int) (remainingMillis / 60000);
                 int remainingSeconds = (int) ((remainingMillis % 60000) / 1000);
-                textCountdown.setText(String.format(Locale.getDefault(), "%02d:%02d", remainingMinutes, remainingSeconds));
+                pitTimerModule.updateCountdown(String.format(Locale.getDefault(), "%02d:%02d", remainingMinutes, remainingSeconds));
             }
         } else {
             // IDLE state - always black background
@@ -305,7 +384,7 @@ public class MainActivity extends AppCompatActivity {
                 long untilMillis = nextWindow.getTimeInMillis() - now.getTimeInMillis();
                 int untilMinutes = (int) (untilMillis / 60000);
                 int untilSeconds = (int) ((untilMillis % 60000) / 1000);
-                textCountdown.setText(String.format(Locale.getDefault(), "%02d:%02d", untilMinutes, untilSeconds));
+                pitTimerModule.updateCountdown(String.format(Locale.getDefault(), "%02d:%02d", untilMinutes, untilSeconds));
             }
         }
     }
@@ -363,7 +442,7 @@ public class MainActivity extends AppCompatActivity {
         if (PitWindowPreferences.SPEEDHIVE_MODE_OFF.equals(mode)) {
             // Hide live timing panel and event/session display
             liveTimingPanel.setVisibility(View.GONE);
-            textEventSession.setVisibility(View.GONE);
+            pitTimerModule.setEventSession("", false);
             speedHiveManager = null;
             previousTimingData = null;
         } else {
@@ -379,7 +458,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "Failed to initialize SpeedHive manager", e);
                     Toast.makeText(this, "SpeedHive config error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     liveTimingPanel.setVisibility(View.GONE);
-                    textEventSession.setVisibility(View.GONE);
+                    pitTimerModule.setEventSession("", false);
                     return;
                 }
             } else if (PitWindowPreferences.SPEEDHIVE_MODE_DEMO.equals(mode)) {
@@ -696,7 +775,7 @@ public class MainActivity extends AppCompatActivity {
             updateEventSessionDisplay();
         } else {
             // No event configured yet
-            textEventSession.setVisibility(View.GONE);
+            pitTimerModule.setEventSession("", false);
         }
     }
     
@@ -705,7 +784,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void updateEventSessionDisplay() {
         if (currentEventName.isEmpty()) {
-            textEventSession.setVisibility(View.GONE);
+            pitTimerModule.setEventSession("", false);
             return;
         }
         
@@ -716,8 +795,7 @@ public class MainActivity extends AppCompatActivity {
             displayText = currentEventName + " - " + currentSessionName;
         }
         
-        textEventSession.setText(displayText);
-        textEventSession.setVisibility(View.VISIBLE);
+        pitTimerModule.setEventSession(displayText, true);
         
         Log.d(TAG, "Updated event/session display: " + displayText);
     }

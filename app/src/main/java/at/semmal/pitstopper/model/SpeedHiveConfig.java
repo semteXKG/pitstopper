@@ -1,4 +1,4 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.model;
 
 import android.content.Context;
 import android.content.res.AssetManager;

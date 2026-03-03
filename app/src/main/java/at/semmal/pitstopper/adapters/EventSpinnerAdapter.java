@@ -1,4 +1,7 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.adapters;
+
+import at.semmal.pitstopper.R;
+import at.semmal.pitstopper.model.SpeedHiveEvent;
 
 import android.content.Context;
 import android.view.LayoutInflater;

@@ -1,4 +1,4 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.timing;
 
 import android.content.Context;
 import android.content.SharedPreferences;

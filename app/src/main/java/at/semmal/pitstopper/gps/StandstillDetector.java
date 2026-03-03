@@ -1,4 +1,4 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.gps;
 
 import android.Manifest;
 import android.content.Context;

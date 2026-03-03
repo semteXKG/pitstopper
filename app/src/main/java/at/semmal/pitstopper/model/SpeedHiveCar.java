@@ -1,4 +1,4 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.model;
 
 /**
  * Data model for a SpeedHive car/competitor.

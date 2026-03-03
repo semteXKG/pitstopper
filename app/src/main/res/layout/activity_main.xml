@@ -122,47 +122,15 @@
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/textEventSession"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:fontFamily="monospace"
-        android:text=""
-        android:textColor="@color/text_primary"
-        android:textSize="16sp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
-        app:layout_constraintStart_toEndOf="@+id/progressBarContainer"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/textCurrentTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="monospace"
-        android:text="00:00"
-        android:textColor="@color/text_primary"
-        android:textSize="120sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/textCountdown"
-        app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
-        app:layout_constraintStart_toEndOf="@+id/progressBarContainer"
-        app:layout_constraintTop_toBottomOf="@+id/textEventSession"
-        app:layout_constraintVertical_chainStyle="packed" />
-
-    <TextView
-        android:id="@+id/textCountdown"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="monospace"
-        android:text="00:00"
-        android:textColor="@color/text_primary"
-        android:textSize="60sp"
+    <!-- Center module container — hosts the active CenterModule view -->
+    <FrameLayout
+        android:id="@+id/centerModuleContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
         app:layout_constraintStart_toEndOf="@+id/progressBarContainer"
-        app:layout_constraintTop_toBottomOf="@+id/textCurrentTime" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

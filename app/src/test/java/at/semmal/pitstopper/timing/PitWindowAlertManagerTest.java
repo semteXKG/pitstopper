@@ -1,4 +1,5 @@
-package at.semmal.pitstopper;
+package at.semmal.pitstopper.timing;
+
 
 import org.junit.Before;
 import org.junit.Test;
