@@ -100,8 +100,6 @@ public class ExternalSessionManager {
                 JSONObject json = new JSONObject(new String(payload));
                 String from = json.optString("from", "?");
                 String text = json.optString("text", "");
-                // Ignore our own messages
-                if (DEVICE_ID.equals(from)) return;
                 mainHandler.post(() -> {
                     if (eventListener != null) {
                         eventListener.onMessage(from, text);
