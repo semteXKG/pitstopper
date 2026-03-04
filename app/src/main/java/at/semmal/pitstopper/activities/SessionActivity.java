@@ -33,6 +33,7 @@ public class SessionActivity extends AppCompatActivity {
     private ImageView imageQrCode;
     private TextView textStatus;
     private TextView textSessionId;
+    private TextView textTopic;
     private View statusDot;
     private EditText editDeviceName;
 
@@ -48,6 +49,7 @@ public class SessionActivity extends AppCompatActivity {
         imageQrCode  = findViewById(R.id.imageQrCode);
         textStatus   = findViewById(R.id.textStatus);
         textSessionId = findViewById(R.id.textSessionId);
+        textTopic    = findViewById(R.id.textTopic);
         statusDot    = findViewById(R.id.statusDot);
         editDeviceName = findViewById(R.id.editDeviceName);
 
@@ -120,6 +122,7 @@ public class SessionActivity extends AppCompatActivity {
 
     private void showSession(String sessionId) {
         textSessionId.setText(sessionId.substring(0, 8) + "...");
+        textTopic.setText(sessionId + "/fiesta/chat");
 
         // Run QR generation off the main thread — 512x512 bitmap is expensive
         new Thread(() -> {
