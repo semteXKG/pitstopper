@@ -10,9 +10,11 @@ import at.semmal.pitstopper.mqtt.ExternalSessionManager;
 import at.semmal.pitstopper.timing.PitWindowAlertManager;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 import at.semmal.pitstopper.ui.CenterModule;
+import at.semmal.pitstopper.ui.ChatModule;
 import at.semmal.pitstopper.ui.CountdownModule;
 import at.semmal.pitstopper.ui.CustomModule;
 import at.semmal.pitstopper.ui.PitTimerModule;
+import at.semmal.pitstopper.model.ChatMessage;
 
 import android.Manifest;
 import android.content.Intent;
@@ -66,9 +68,11 @@ public class MainActivity extends AppCompatActivity {
     // Center modules
     private PitTimerModule pitTimerModule;
     private CustomModule customModule;
+    private ChatModule chatModule;
     private CountdownModule countdownModule;
     private CenterModule activeModule;
     private CenterModule preCountdownModule; // module to restore after pit stop
+    private final CenterModule[] swipeModules = new CenterModule[3]; // ordered swipe cycle
 
     // MQTT
     private MqttClientManager mqttClientManager;
@@ -131,13 +135,19 @@ public class MainActivity extends AppCompatActivity {
         // Initialize center modules
         pitTimerModule = new PitTimerModule(this);
         customModule = new CustomModule(this);
+        chatModule = new ChatModule(this);
         countdownModule = new CountdownModule(this);
         centerModuleContainer.addView(pitTimerModule);
         centerModuleContainer.addView(customModule);
+        centerModuleContainer.addView(chatModule);
         centerModuleContainer.addView(countdownModule);
+        swipeModules[0] = pitTimerModule;
+        swipeModules[1] = customModule;
+        swipeModules[2] = chatModule;
         activeModule = pitTimerModule;
         pitTimerModule.onActivate();
         customModule.onDeactivate();
+        chatModule.onDeactivate();
         countdownModule.onDeactivate();
 
         // Grab shared MQTT manager
@@ -301,8 +311,10 @@ public class MainActivity extends AppCompatActivity {
         // (moved to onCreate — do NOT call here to avoid duplicate subscriptions)
 
         // Register for external session events
-        externalSessionManager.setEventListener((from, text) ->
-                showSessionEventBanner(from, text));
+        externalSessionManager.setEventListener((from, text) -> {
+            chatModule.addMessage(new ChatMessage(from, text, System.currentTimeMillis()));
+            showSessionEventBanner(from, text);
+        });
 
         // Start updating the clock when activity becomes visible
         updateTime(); // Update immediately
@@ -483,12 +495,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Toggle between the two swipeable center modules with a scroll-like slide animation.
+     * Toggle between the swipeable center modules with a scroll-like slide animation.
      * @param swipeUp true if the user swiped up (outgoing slides up, incoming slides from below)
      */
     private void toggleModule(boolean swipeUp) {
-        CenterModule incoming = (activeModule == pitTimerModule) ? customModule : pitTimerModule;
-        switchToModule(incoming, swipeUp);
+        int current = 0;
+        for (int i = 0; i < swipeModules.length; i++) {
+            if (swipeModules[i] == activeModule) { current = i; break; }
+        }
+        int next = swipeUp
+                ? (current + 1) % swipeModules.length
+                : (current - 1 + swipeModules.length) % swipeModules.length;
+        switchToModule(swipeModules[next], swipeUp);
     }
 
     private void updateTime() {
