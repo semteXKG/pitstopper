@@ -301,8 +301,8 @@ public class MainActivity extends AppCompatActivity {
         // (moved to onCreate — do NOT call here to avoid duplicate subscriptions)
 
         // Register for external session events
-        externalSessionManager.setEventListener((eventType, from, ts) ->
-                showSessionEventBanner(eventType, from));
+        externalSessionManager.setEventListener((from, text) ->
+                showSessionEventBanner(from, text));
 
         // Start updating the clock when activity becomes visible
         updateTime(); // Update immediately
@@ -377,14 +377,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Show a brief banner overlay when an event arrives from another device.
      */
-    private void showSessionEventBanner(String eventType, String from) {
-        String label;
-        switch (eventType) {
-            case "PIT_PRESSED": label = "🏎 PIT — from " + from; break;
-            case "ALARM":       label = "🚨 ALARM — from " + from; break;
-            default:            label = eventType + " — from " + from;
-        }
-        Toast.makeText(this, label, Toast.LENGTH_LONG).show();
+    private void showSessionEventBanner(String from, String text) {
+        Toast.makeText(this, text + " — from " + from, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -428,9 +422,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void publishSessionEvent(String eventType) {
-        String label = preferences.getDeviceLabel();
-        if (label == null || label.isEmpty()) label = "Device";
-        externalSessionManager.publishEvent(eventType, label);
+        String text;
+        switch (eventType) {
+            case "PIT_PRESSED": text = "PIT"; break;
+            case "ALARM":       text = "ALARM"; break;
+            default:            text = eventType;
+        }
+        externalSessionManager.publishMessage(text);
     }
 
     private void onPitButtonPressed() {

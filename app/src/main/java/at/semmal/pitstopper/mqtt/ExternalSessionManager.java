@@ -9,22 +9,21 @@ import org.json.JSONObject;
 
 /**
  * Manages a bidirectional MQTT session over a public broker (broker.hivemq.com).
- * The session ID is a UUID used as the topic suffix — security through obscurity.
+ * The session ID is a UUID used as the topic prefix — security through obscurity.
  *
- * Topic: pitstopper/{sessionId}/events
- * Payload: {"event":"PIT_PRESSED","from":"Driver","ts":1234567890}
+ * Topic: {sessionId}/fiesta/chat
+ * Payload: {"from":"pitstopper","text":"<message>"}
  */
 public class ExternalSessionManager {
 
     private static final String TAG = "ExternalSessionManager";
     private static final String DEFAULT_BROKER = "broker.hivemq.com";
     private static final int DEFAULT_PORT = 1883;
-    private static final String TOPIC_PREFIX = "pitstopper/";
-    private static final String TOPIC_SUFFIX = "/events";
+    private static final String DEVICE_ID = "pitstopper";
 
     public interface SessionEventListener {
-        /** Called on the main thread when an event arrives from another device. */
-        void onEvent(String eventType, String from, long ts);
+        /** Called on the main thread when a chat message arrives from another device. */
+        void onMessage(String from, String text);
     }
 
     private final MqttClientManager mqtt = new MqttClientManager();
@@ -75,24 +74,22 @@ public class ExternalSessionManager {
     }
 
     /**
-     * Publish an event to the session topic.
+     * Publish a chat message to the session topic.
      *
-     * @param eventType e.g. "PIT_PRESSED", "ALARM"
-     * @param from      human-readable device label, e.g. "Driver"
+     * @param text message text, e.g. "PIT" or "ALARM"
      */
-    public void publishEvent(String eventType, String from) {
+    public void publishMessage(String text) {
         if (sessionId == null) {
             Log.w(TAG, "Cannot publish: no session ID");
             return;
         }
         try {
             JSONObject json = new JSONObject();
-            json.put("event", eventType);
-            json.put("from", from);
-            json.put("ts", System.currentTimeMillis());
+            json.put("from", DEVICE_ID);
+            json.put("text", text);
             mqtt.publish(buildTopic(), json.toString().getBytes());
         } catch (JSONException e) {
-            Log.e(TAG, "Failed to build event payload", e);
+            Log.e(TAG, "Failed to build chat payload", e);
         }
     }
 
@@ -101,22 +98,23 @@ public class ExternalSessionManager {
         mqtt.subscribe(buildTopic(), payload -> {
             try {
                 JSONObject json = new JSONObject(new String(payload));
-                String event = json.optString("event", "");
-                String from  = json.optString("from", "?");
-                long   ts    = json.optLong("ts", 0);
+                String from = json.optString("from", "?");
+                String text = json.optString("text", "");
+                // Ignore our own messages
+                if (DEVICE_ID.equals(from)) return;
                 mainHandler.post(() -> {
                     if (eventListener != null) {
-                        eventListener.onEvent(event, from, ts);
+                        eventListener.onMessage(from, text);
                     }
                 });
             } catch (JSONException e) {
-                Log.w(TAG, "Malformed session event payload");
+                Log.w(TAG, "Malformed chat payload");
             }
         });
         Log.i(TAG, "Subscribed to " + buildTopic());
     }
 
     private String buildTopic() {
-        return TOPIC_PREFIX + sessionId + TOPIC_SUFFIX;
+        return sessionId + "/fiesta/chat";
     }
 }
