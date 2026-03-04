@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private CountdownModule countdownModule;
     private CenterModule activeModule;
     private CenterModule preCountdownModule; // module to restore after pit stop
-    private final CenterModule[] swipeModules = new CenterModule[3]; // ordered swipe cycle
+    private final CenterModule[] swipeModules = new CenterModule[2]; // ordered swipe cycle
 
     // MQTT
     private MqttClientManager mqttClientManager;
@@ -142,8 +142,7 @@ public class MainActivity extends AppCompatActivity {
         centerModuleContainer.addView(chatModule);
         centerModuleContainer.addView(countdownModule);
         swipeModules[0] = pitTimerModule;
-        swipeModules[1] = customModule;
-        swipeModules[2] = chatModule;
+        swipeModules[1] = chatModule;
         activeModule = pitTimerModule;
         pitTimerModule.onActivate();
         customModule.onDeactivate();
