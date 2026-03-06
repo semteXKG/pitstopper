@@ -65,7 +65,6 @@ public class SettingsActivity extends AppCompatActivity {
     private EditText editExtMqttHost;
     private EditText editExtMqttPort;
     private TextView textExtMqttStatus;
-    private Button buttonExtMqttConnect;
 
     private MqttClientManager mqttClientManager;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -128,7 +127,6 @@ public class SettingsActivity extends AppCompatActivity {
         editExtMqttHost = findViewById(R.id.editExtMqttHost);
         editExtMqttPort = findViewById(R.id.editExtMqttPort);
         textExtMqttStatus = findViewById(R.id.textExtMqttStatus);
-        buttonExtMqttConnect = findViewById(R.id.buttonExtMqttConnect);
 
         mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
 
@@ -724,8 +722,6 @@ public class SettingsActivity extends AppCompatActivity {
         editExtMqttHost.addTextChangedListener(savingWatcher);
         editExtMqttPort.addTextChangedListener(savingWatcher);
 
-        buttonExtMqttConnect.setOnClickListener(v -> toggleExtMqttConnection(extMqtt));
-
         extMqttStateListener = (state, error) -> mainHandler.post(() -> updateExtMqttStatusUi(state, error));
         extMqtt.addStateListener(extMqttStateListener);
         updateExtMqttStatusUi(extMqtt.getState(), null);
@@ -772,23 +768,19 @@ public class SettingsActivity extends AppCompatActivity {
             case CONNECTED:
                 textExtMqttStatus.setText(R.string.mqtt_status_connected);
                 textExtMqttStatus.setTextColor(Color.parseColor("#4CAF50"));
-                buttonExtMqttConnect.setText(R.string.mqtt_disconnect);
                 break;
             case CONNECTING:
                 textExtMqttStatus.setText(R.string.mqtt_status_connecting);
                 textExtMqttStatus.setTextColor(Color.parseColor("#FFC107"));
-                buttonExtMqttConnect.setText(R.string.mqtt_disconnect);
                 break;
             case FAILING:
                 String msg = error != null ? error : "";
                 textExtMqttStatus.setText(getString(R.string.mqtt_status_failing, msg));
                 textExtMqttStatus.setTextColor(Color.parseColor("#F44336"));
-                buttonExtMqttConnect.setText(R.string.mqtt_connect);
                 break;
             default:
                 textExtMqttStatus.setText(R.string.mqtt_status_disconnected);
                 textExtMqttStatus.setTextColor(Color.parseColor("#9E9E9E"));
-                buttonExtMqttConnect.setText(R.string.mqtt_connect);
                 break;
         }
     }

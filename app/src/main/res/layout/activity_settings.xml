@@ -484,18 +484,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/editExtMqttPort" />
 
-    <Button
-        android:id="@+id/buttonExtMqttConnect"
-        android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:layout_marginTop="8dp"
-        android:text="@string/mqtt_connect"
-        android:textSize="20sp"
-        android:backgroundTint="@color/teal_700"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textExtMqttStatus" />
-
     <LinearLayout
         android:id="@+id/buttonLayout"
         android:layout_width="0dp"
@@ -504,7 +492,7 @@
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonExtMqttConnect">
+        app:layout_constraintTop_toBottomOf="@id/textExtMqttStatus">
 
         <Button
             android:id="@+id/buttonCancel"

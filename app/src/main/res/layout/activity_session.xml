@@ -54,11 +54,25 @@
         app:layout_constraintTop_toBottomOf="@id/labelTeamSession"
         app:layout_constraintStart_toEndOf="@id/statusDot" />
 
+    <!-- Restore button — left of QR -->
+    <Button
+        android:id="@+id/buttonRestoreSession"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="8dp"
+        android:text="Restore"
+        android:fontFamily="monospace"
+        app:layout_constraintTop_toBottomOf="@id/textStatus"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/imageQrCode"
+        app:layout_constraintBottom_toBottomOf="@id/imageQrCode" />
+
     <!-- QR code -->
     <ImageView
         android:id="@+id/imageQrCode"
-        android:layout_width="240dp"
-        android:layout_height="240dp"
+        android:layout_width="190dp"
+        android:layout_height="190dp"
         android:layout_marginTop="24dp"
         android:contentDescription="Session QR Code"
         android:scaleType="fitCenter"
@@ -66,19 +80,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Session ID label -->
-    <TextView
-        android:id="@+id/textSessionId"
-        android:layout_width="wrap_content"
+    <!-- New Session button — right of QR -->
+    <Button
+        android:id="@+id/buttonNewSession"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="No session"
-        android:textColor="#888888"
-        android:textSize="12sp"
+        android:layout_marginTop="24dp"
+        android:layout_marginStart="8dp"
+        android:text="New Session"
         android:fontFamily="monospace"
-        app:layout_constraintTop_toBottomOf="@id/imageQrCode"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/textStatus"
+        app:layout_constraintStart_toEndOf="@id/imageQrCode"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/imageQrCode" />
+
+    <!-- Session ID label - removed -->
 
     <!-- Full MQTT topic — selectable for copy/paste -->
     <TextView
@@ -86,36 +102,25 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:textColor="#888888"
-        android:textSize="11sp"
+        android:textColor="#CCCCCC"
+        android:textSize="15sp"
+        android:gravity="center"
         android:fontFamily="monospace"
         android:textIsSelectable="true"
-        app:layout_constraintTop_toBottomOf="@id/textSessionId"
+        app:layout_constraintTop_toBottomOf="@id/imageQrCode"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Buttons -->
+    <!-- Connect/Disconnect external broker -->
     <Button
-        android:id="@+id/buttonNewSession"
+        android:id="@+id/buttonExtMqttConnect"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="8dp"
-        android:text="New Session"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/teal_700"
         android:fontFamily="monospace"
         app:layout_constraintTop_toBottomOf="@id/textTopic"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/buttonRestoreSession" />
-
-    <Button
-        android:id="@+id/buttonRestoreSession"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Restore"
-        android:fontFamily="monospace"
-        app:layout_constraintTop_toBottomOf="@id/textTopic"
-        app:layout_constraintStart_toEndOf="@id/buttonNewSession"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Device label -->
@@ -128,7 +133,7 @@
         android:textColor="@color/text_primary"
         android:textSize="14sp"
         android:fontFamily="monospace"
-        app:layout_constraintTop_toBottomOf="@id/buttonNewSession"
+        app:layout_constraintTop_toBottomOf="@id/buttonExtMqttConnect"
         app:layout_constraintStart_toStartOf="parent" />
 
     <EditText

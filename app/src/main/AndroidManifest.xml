@@ -9,6 +9,9 @@
     <!-- Internet permission for SpeedHive Live Timing API and MQTT -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Microphone permission for push-to-talk speech recognition -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:name=".activities.PitStopperApplication"
         android:allowBackup="true"
@@ -47,6 +50,11 @@
 
         <activity
             android:name=".activities.FlashMessageActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+
+        <activity
+            android:name=".activities.ChatMessageActivity"
             android:exported="false"
             android:launchMode="singleTop" />
 

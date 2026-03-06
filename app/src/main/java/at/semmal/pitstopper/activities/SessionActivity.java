@@ -1,7 +1,7 @@
 package at.semmal.pitstopper.activities;
 
-import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -32,10 +32,10 @@ public class SessionActivity extends AppCompatActivity {
 
     private ImageView imageQrCode;
     private TextView textStatus;
-    private TextView textSessionId;
     private TextView textTopic;
     private View statusDot;
     private EditText editDeviceName;
+    private Button buttonExtMqttConnect;
 
     private PitWindowPreferences preferences;
     private ExternalSessionManager sessionManager;
@@ -48,10 +48,10 @@ public class SessionActivity extends AppCompatActivity {
 
         imageQrCode  = findViewById(R.id.imageQrCode);
         textStatus   = findViewById(R.id.textStatus);
-        textSessionId = findViewById(R.id.textSessionId);
         textTopic    = findViewById(R.id.textTopic);
         statusDot    = findViewById(R.id.statusDot);
         editDeviceName = findViewById(R.id.editDeviceName);
+        buttonExtMqttConnect = findViewById(R.id.buttonExtMqttConnect);
 
         preferences    = new PitWindowPreferences(this);
         sessionManager = ((PitStopperApplication) getApplication()).getExternalSessionManager();
@@ -62,6 +62,7 @@ public class SessionActivity extends AppCompatActivity {
 
         btnNew.setOnClickListener(v -> createNewSession());
         btnRestore.setOnClickListener(v -> restoreSession());
+        buttonExtMqttConnect.setOnClickListener(v -> toggleExtMqttConnection());
 
         // Load saved device label
         String saved = preferences.getDeviceLabel();
@@ -121,7 +122,6 @@ public class SessionActivity extends AppCompatActivity {
     }
 
     private void showSession(String sessionId) {
-        textSessionId.setText(sessionId.substring(0, 8) + "...");
         textTopic.setText(sessionId + "/fiesta/chat");
 
         // Run QR generation off the main thread — 512x512 bitmap is expensive
@@ -151,18 +151,53 @@ public class SessionActivity extends AppCompatActivity {
             case CONNECTED:
                 statusDot.setBackgroundResource(R.drawable.circle_dot_green);
                 textStatus.setText("Connected");
+                buttonExtMqttConnect.setText(R.string.mqtt_disconnect);
+                buttonExtMqttConnect.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336")));
                 break;
             case CONNECTING:
                 statusDot.setBackgroundResource(R.drawable.circle_dot);
                 textStatus.setText("Connecting…");
+                buttonExtMqttConnect.setText(R.string.mqtt_disconnect);
+                buttonExtMqttConnect.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336")));
                 break;
             case FAILING:
                 statusDot.setBackgroundResource(R.drawable.circle_dot_red);
                 textStatus.setText("Error: " + (error != null ? error : "unknown"));
+                buttonExtMqttConnect.setText(R.string.mqtt_connect);
+                buttonExtMqttConnect.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#009688")));
                 break;
             default:
                 statusDot.setBackgroundResource(R.drawable.circle_dot);
                 textStatus.setText("Not connected");
+                buttonExtMqttConnect.setText(R.string.mqtt_connect);
+                buttonExtMqttConnect.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(Color.parseColor("#009688")));
+                break;
+        }
+    }
+
+    private void toggleExtMqttConnection() {
+        MqttClientManager.State state = sessionManager.getState();
+        if (state == MqttClientManager.State.CONNECTED || state == MqttClientManager.State.CONNECTING) {
+            preferences.saveExtMqttSettings(preferences.getExtMqttHost(), preferences.getExtMqttPort(), false);
+            sessionManager.disconnect();
+        } else {
+            String host = preferences.getExtMqttHost();
+            int port = preferences.getExtMqttPort();
+            if (host == null || host.isEmpty()) {
+                Toast.makeText(this, "Set broker host in Settings first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String sessionId = preferences.getSessionId();
+            if (sessionId == null) {
+                Toast.makeText(this, "Create a team session first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            preferences.saveExtMqttSettings(host, port, true);
+            sessionManager.connect(sessionId, host, port);
         }
     }
 }
