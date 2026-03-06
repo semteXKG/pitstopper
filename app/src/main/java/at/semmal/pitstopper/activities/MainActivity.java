@@ -15,6 +15,7 @@ import at.semmal.pitstopper.ui.CountdownModule;
 import at.semmal.pitstopper.ui.CustomModule;
 import at.semmal.pitstopper.ui.PitTimerModule;
 import at.semmal.pitstopper.model.ChatMessage;
+import at.semmal.pitstopper.speech.SpeechToTextManager;
 
 import android.Manifest;
 import android.content.Intent;
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "PitStopper";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 1002;
 
     private ImageButton buttonSettings;
     private ConstraintLayout rootLayout;
@@ -90,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
     private PitWindowPreferences preferences;
     private PitWindowAlertManager alertManager;
     private StandstillDetector standstillDetector;
+    private SpeechToTextManager speechToTextManager;
     private boolean wasInAlertState = false;
     
     // SpeedHive Live Timing
@@ -256,6 +259,22 @@ public class MainActivity extends AppCompatActivity {
         // Request location permissions
         checkAndRequestLocationPermission();
 
+        // Initialize speech-to-text and request microphone permission
+        speechToTextManager = new SpeechToTextManager(this);
+        speechToTextManager.setListener(new SpeechToTextManager.ResultListener() {
+            @Override
+            public void onResult(String text) {
+                externalSessionManager.publishMessage(text);
+                showFlashMessage(text); // auto-closes after 1.5s, replaces the "Listening…" screen
+            }
+            @Override
+            public void onError(int errorCode) {
+                Log.w(TAG, "STT error " + errorCode + " — nothing sent");
+                showFlashMessage(""); // close the persist screen immediately (empty → 1.5s then gone)
+            }
+        });
+        checkAndRequestAudioPermission();
+
         // Enable fullscreen immersive mode
         hideSystemUI();
     }
@@ -266,12 +285,22 @@ public class MainActivity extends AppCompatActivity {
     private void checkAndRequestLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            // Permission not granted, request it
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     LOCATION_PERMISSION_REQUEST_CODE);
         } else {
             Log.i(TAG, "Location permission already granted");
+        }
+    }
+
+    private void checkAndRequestAudioPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    RECORD_AUDIO_PERMISSION_REQUEST_CODE);
+        } else {
+            Log.i(TAG, "Audio permission already granted");
         }
     }
 
@@ -284,6 +313,12 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Log.w(TAG, "Location permission denied - GPS auto-clear will not work");
                 Toast.makeText(this, "Location permission denied - GPS auto-pause disabled", Toast.LENGTH_LONG).show();
+            }
+        } else if (requestCode == RECORD_AUDIO_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, "Audio permission granted");
+            } else {
+                Log.w(TAG, "Audio permission denied - TALK button will not transcribe");
             }
         }
     }
@@ -310,8 +345,8 @@ public class MainActivity extends AppCompatActivity {
         // (moved to onCreate — do NOT call here to avoid duplicate subscriptions)
 
         // Register for external session events
-        externalSessionManager.setEventListener((from, text) -> {
-            chatModule.addMessage(new ChatMessage(from, text, System.currentTimeMillis()));
+        externalSessionManager.setEventListener((from, text, isNotification, isAlert) -> {
+            chatModule.addMessage(new ChatMessage(from, text, System.currentTimeMillis(), isNotification, isAlert));
             showSessionEventBanner(from, text);
         });
 
@@ -356,6 +391,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (speechToTextManager != null) {
+            speechToTextManager.destroy();
+        }
     }
 
     @Override
@@ -386,10 +424,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Show a brief banner overlay when an event arrives from another device.
+     * Called when a chat message arrives from another device.
      */
     private void showSessionEventBanner(String from, String text) {
-        Toast.makeText(this, text + " — from " + from, Toast.LENGTH_LONG).show();
+        Intent intent = new Intent(this, ChatMessageActivity.class);
+        intent.putExtra(ChatMessageActivity.EXTRA_MESSAGE, text);
+        intent.putExtra(ChatMessageActivity.EXTRA_FROM, from);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
     }
 
     /**
@@ -421,10 +463,27 @@ public class MainActivity extends AppCompatActivity {
                 if ("PIT".equals(button)) {
                     runOnUiThread(this::onPitButtonPressed);
                     publishSessionEvent("PIT_PRESSED");
+                    runOnUiThread(() -> showFlashMessage("PIT"));
                 } else if ("ALARM".equals(button)) {
                     publishSessionEvent("ALARM");
-                } else if ("FCK".equals(button) || "STINT".equals(button)) {
-                    runOnUiThread(() -> showFlashMessage(button + "\nsent"));
+                } else if ("YES".equals(button)) {
+                    externalSessionManager.publishMessage("yes");
+                    runOnUiThread(() -> showFlashMessage("YES"));
+                } else if ("NO".equals(button)) {
+                    externalSessionManager.publishMessage("no");
+                    runOnUiThread(() -> showFlashMessage("NO"));
+                } else if ("FCK".equals(button)) {
+                    externalSessionManager.publishMessage(button.toLowerCase(), false, true);
+                    runOnUiThread(() -> showFlashMessage(button));
+                } else if ("TALK".equals(button)) {
+                    runOnUiThread(() -> {
+                        showFlashMessage("🎙 Listening…", true); // persist until result
+                        speechToTextManager.startListening();
+                    });
+                }
+            } else if ("RELEASED".equals(state)) {
+                if ("TALK".equals(button)) {
+                    runOnUiThread(() -> speechToTextManager.stopListening());
                 }
             }
         } catch (JSONException e) {
@@ -434,12 +493,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void publishSessionEvent(String eventType) {
         String text;
+        boolean isNotification = false;
+        boolean isAlert = false;
         switch (eventType) {
-            case "PIT_PRESSED": text = "PIT"; break;
-            case "ALARM":       text = "ALARM"; break;
+            case "PIT_PRESSED": text = "PIT";   isNotification = true; break;
+            case "ALARM":       text = "ALARM"; isAlert = true;        break;
             default:            text = eventType;
         }
-        externalSessionManager.publishMessage(text);
+        externalSessionManager.publishMessage(text, isNotification, isAlert);
     }
 
     private void onPitButtonPressed() {
@@ -463,9 +524,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showFlashMessage(String message) {
+        showFlashMessage(message, false);
+    }
+
+    private void showFlashMessage(String message, boolean persist) {
         flashMessageActive = true;
         Intent intent = new Intent(this, FlashMessageActivity.class);
         intent.putExtra(FlashMessageActivity.EXTRA_MESSAGE, message);
+        intent.putExtra(FlashMessageActivity.EXTRA_PERSIST, persist);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
     }
