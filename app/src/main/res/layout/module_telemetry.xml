@@ -6,6 +6,16 @@
     android:layout_height="match_parent"
     android:padding="8dp">
 
+    <!-- Drawn grid overlay (behind all content) -->
+    <at.semmal.pitstopper.ui.TelemetryGridView
+        android:id="@+id/telemetryGrid"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <!-- Guidelines to divide the screen into 3 zones -->
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideMiddle"

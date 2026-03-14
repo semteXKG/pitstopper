@@ -20,6 +20,7 @@
     <color name="brake_touch">#FFFFCC00</color>
     <color name="brake_pressed">#FFFF2222</color>
     <color name="throttle_bar">#FF00AA00</color>
+    <color name="telemetry_grid">#FF444444</color>
     
     <!-- SpeedHive gap trend colors -->
     <color name="gap_positive">#FF00CC00</color>
