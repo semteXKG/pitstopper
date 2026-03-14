@@ -14,6 +14,7 @@ import at.semmal.pitstopper.ui.ChatModule;
 import at.semmal.pitstopper.ui.CountdownModule;
 import at.semmal.pitstopper.ui.CustomModule;
 import at.semmal.pitstopper.ui.PitTimerModule;
+import at.semmal.pitstopper.ui.TelemetryModule;
 import at.semmal.pitstopper.model.ChatMessage;
 import at.semmal.pitstopper.speech.SpeechToTextManager;
 
@@ -26,11 +27,10 @@ import android.os.Looper;
 import android.text.SpannableString;
 import android.text.style.RelativeSizeSpan;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import at.semmal.pitstopper.ui.SwipeInterceptLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private ConstraintLayout rootLayout;
     private View progressBar;
     private FrameLayout progressBarContainer;
-    private FrameLayout centerModuleContainer;
+    private SwipeInterceptLayout centerModuleContainer;
     private Handler handler;
     private Runnable updateTimeRunnable;
     private SimpleDateFormat timeFormat;
@@ -72,14 +72,16 @@ public class MainActivity extends AppCompatActivity {
     private CustomModule customModule;
     private ChatModule chatModule;
     private CountdownModule countdownModule;
+    private TelemetryModule telemetryModule;
     private CenterModule activeModule;
     private CenterModule preCountdownModule; // module to restore after pit stop
-    private final CenterModule[] swipeModules = new CenterModule[2]; // ordered swipe cycle
+    private final CenterModule[] swipeModules = new CenterModule[3]; // ordered swipe cycle
 
     // MQTT
     private MqttClientManager mqttClientManager;
     private MqttClientManager.StateListener mqttButtonsListener;
     private boolean buttonsSubscribed = false;
+    private boolean telemetrySubscribed = false;
     private boolean flashMessageActive = false;
     private ExternalSessionManager externalSessionManager;
     
@@ -140,17 +142,21 @@ public class MainActivity extends AppCompatActivity {
         customModule = new CustomModule(this);
         chatModule = new ChatModule(this);
         countdownModule = new CountdownModule(this);
+        telemetryModule = new TelemetryModule(this);
         centerModuleContainer.addView(pitTimerModule);
         centerModuleContainer.addView(customModule);
         centerModuleContainer.addView(chatModule);
         centerModuleContainer.addView(countdownModule);
+        centerModuleContainer.addView(telemetryModule);
         swipeModules[0] = pitTimerModule;
-        swipeModules[1] = chatModule;
+        swipeModules[1] = telemetryModule;
+        swipeModules[2] = chatModule;
         activeModule = pitTimerModule;
         pitTimerModule.onActivate();
         customModule.onDeactivate();
         chatModule.onDeactivate();
         countdownModule.onDeactivate();
+        telemetryModule.onDeactivate();
 
         // Grab shared MQTT manager
         mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
@@ -158,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Subscribe to physical button events once — not in onResume to avoid duplicate subscriptions
         subscribeToButtons();
+        subscribeToTelemetry();
 
         // Handle deep link join (pitstopper://join?session=...)
         handleSessionDeepLink(getIntent());
@@ -212,31 +219,13 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, SessionActivity.class)));
 
         // Swipe up or down on the center module container to toggle between modules
-        GestureDetector swipeDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-            private static final int SWIPE_THRESHOLD = 100;
-            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return true; // required for onFling to be delivered
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if (e1 == null || e2 == null) return false;
-                if (activeModule == countdownModule) return false; // locked during pit stop
-                float deltaY = e2.getY() - e1.getY();
-                if (Math.abs(deltaY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                    toggleModule(deltaY < 0);
-                    return true;
-                }
-                return false;
+        centerModuleContainer.setOnModuleSwipeListener(swipeUp -> {
+            if (activeModule != countdownModule) {
+                toggleModule(swipeUp);
             }
         });
-        centerModuleContainer.setClickable(true); // ensures touch events reach the container
         centerModuleContainer.setClipChildren(false); // allow modules to slide outside container bounds
         rootLayout.setClipChildren(false);           // allow container children to slide past its edge
-        centerModuleContainer.setOnTouchListener((v, event) -> swipeDetector.onTouchEvent(event));
 
         // Initialize StandstillDetector for GPS-based pit stop detection
         standstillDetector = new StandstillDetector(this, new StandstillDetector.StandstillListener() {
@@ -454,6 +443,97 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void subscribeToTelemetry() {
+        if (telemetrySubscribed) return;
+        if (mqttClientManager.isConnected()) {
+            doSubscribeTelemetry();
+        } else {
+            mqttClientManager.addStateListener((state, error) -> {
+                if (state == MqttClientManager.State.CONNECTED && !telemetrySubscribed) {
+                    doSubscribeTelemetry();
+                }
+            });
+        }
+    }
+
+    private void doSubscribeTelemetry() {
+        mqttClientManager.subscribe("fiesta/sensors", this::handleSensorsMessage);
+        mqttClientManager.subscribe("fiesta/can/201", this::handleCan201Message);
+        mqttClientManager.subscribe("fiesta/can/360", this::handleCan360Message);
+        mqttClientManager.subscribe("fiesta/can/420", this::handleCan420Message);
+        mqttClientManager.subscribe("fiesta/can/428", this::handleCan428Message);
+        telemetrySubscribed = true;
+        Log.i(TAG, "Subscribed to telemetry topics");
+    }
+
+    private void handleSensorsMessage(byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            int oilTemp = json.optInt("oil_temp", Integer.MIN_VALUE);
+            double oilPres = json.optDouble("oil_pres", Double.NaN);
+            if (oilTemp != Integer.MIN_VALUE && !Double.isNaN(oilPres)) {
+                runOnUiThread(() -> telemetryModule.updateSensors(oilTemp, (float) oilPres));
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Malformed sensors payload");
+        }
+    }
+
+    private void handleCan201Message(byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            int rpm = json.optInt("rpm", Integer.MIN_VALUE);
+            double speedKmh = json.optDouble("speed_kmh", Double.NaN);
+            double throttlePct = json.optDouble("throttle_pct", Double.NaN);
+            if (rpm != Integer.MIN_VALUE) {
+                runOnUiThread(() -> telemetryModule.updateCan201(
+                        rpm,
+                        Double.isNaN(speedKmh) ? 0f : (float) speedKmh,
+                        Double.isNaN(throttlePct) ? 0f : (float) throttlePct));
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Malformed CAN 201 payload");
+        }
+    }
+
+    private void handleCan360Message(byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            String brake = json.optString("brake_pedal", "");
+            if (!brake.isEmpty()) {
+                runOnUiThread(() -> telemetryModule.updateBrake(brake));
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Malformed CAN 360 payload");
+        }
+    }
+
+    private void handleCan420Message(byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            int coolantC = json.optInt("coolant_c", Integer.MIN_VALUE);
+            String brake = json.optString("brake_pedal", "");
+            if (coolantC != Integer.MIN_VALUE) {
+                runOnUiThread(() -> telemetryModule.updateCan420(
+                        coolantC, brake.isEmpty() ? "off" : brake));
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Malformed CAN 420 payload");
+        }
+    }
+
+    private void handleCan428Message(byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            double batteryV = json.optDouble("battery_v", Double.NaN);
+            if (!Double.isNaN(batteryV)) {
+                runOnUiThread(() -> telemetryModule.updateBattery((float) batteryV));
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Malformed CAN 428 payload");
+        }
+    }
+
     private void handleButtonMessage(byte[] payload) {
         try {
             JSONObject json = new JSONObject(new String(payload));
@@ -557,6 +637,8 @@ public class MainActivity extends AppCompatActivity {
                 .start();
 
         activeModule = target;
+        centerModuleContainer.setActiveRecyclerView(
+                target instanceof ChatModule ? ((ChatModule) target).getRecyclerView() : null);
     }
 
     /**

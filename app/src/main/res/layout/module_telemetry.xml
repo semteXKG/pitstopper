@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp">
+
+    <!-- Guidelines to divide the screen into 3 zones -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideMiddle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.42" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideBottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.72" />
+
+    <!-- ═══════ TIER 1: RPM (top zone, 0% – 42%) ═══════ -->
+
+    <TextView
+        android:id="@+id/textRpmValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textSize="80sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/textRpmLabel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/textRpmLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:text="RPM"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@id/guideMiddle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textRpmValue" />
+
+    <!-- ═══════ TIER 2: Speed + Throttle/Brake (middle zone, 42% – 72%) ═══════ -->
+
+    <!-- Speed value + label (left side) -->
+    <TextView
+        android:id="@+id/textSpeedValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textSize="48sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/textSpeedLabel"
+        app:layout_constraintEnd_toStartOf="@id/throttleBrakeGroup"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/guideMiddle"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintHorizontal_bias="0.2" />
+
+    <TextView
+        android:id="@+id/textSpeedLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:text="km/h"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@id/guideBottom"
+        app:layout_constraintEnd_toEndOf="@id/textSpeedValue"
+        app:layout_constraintStart_toStartOf="@id/textSpeedValue"
+        app:layout_constraintTop_toBottomOf="@id/textSpeedValue" />
+
+    <!-- Throttle + Brake group (right side of middle row) -->
+    <LinearLayout
+        android:id="@+id/throttleBrakeGroup"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintBottom_toTopOf="@id/guideBottom"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/guideMiddle"
+        app:layout_constraintWidth_percent="0.55"
+        app:layout_constraintHorizontal_bias="1.0">
+
+        <!-- Throttle bar -->
+        <TextView
+            android:id="@+id/textThrottleLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="THR"
+            android:textColor="@color/telemetry_label"
+            android:textSize="12sp" />
+
+        <FrameLayout
+            android:id="@+id/throttleBarContainer"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="#333333">
+
+            <View
+                android:id="@+id/throttleBarFill"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:background="@color/throttle_bar" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/textThrottleValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="-- %"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <!-- Brake indicator -->
+        <TextView
+            android:id="@+id/textBrakeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="monospace"
+            android:text="BRK"
+            android:textColor="@color/telemetry_label"
+            android:textSize="12sp" />
+
+        <View
+            android:id="@+id/brakeIndicator"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="#333333" />
+
+    </LinearLayout>
+
+    <!-- ═══════ TIER 3: Engine health row (bottom zone, 72% – 100%) ═══════ -->
+
+    <!-- Coolant -->
+    <TextView
+        android:id="@+id/textCoolantValue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/textCoolantLabel"
+        app:layout_constraintEnd_toStartOf="@id/textOilTempValue"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/guideBottom"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/textCoolantLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="COOL"
+        android:textColor="@color/telemetry_label"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/textCoolantValue"
+        app:layout_constraintStart_toStartOf="@id/textCoolantValue"
+        app:layout_constraintTop_toBottomOf="@id/textCoolantValue" />
+
+    <!-- Oil Temp -->
+    <TextView
+        android:id="@+id/textOilTempValue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@id/textCoolantValue"
+        app:layout_constraintEnd_toStartOf="@id/textOilPresValue"
+        app:layout_constraintStart_toEndOf="@id/textCoolantValue" />
+
+    <TextView
+        android:id="@+id/textOilTempLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="OIL T"
+        android:textColor="@color/telemetry_label"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/textCoolantLabel"
+        app:layout_constraintEnd_toEndOf="@id/textOilTempValue"
+        app:layout_constraintStart_toStartOf="@id/textOilTempValue" />
+
+    <!-- Oil Pressure -->
+    <TextView
+        android:id="@+id/textOilPresValue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@id/textCoolantValue"
+        app:layout_constraintEnd_toStartOf="@id/textBatteryValue"
+        app:layout_constraintStart_toEndOf="@id/textOilTempValue" />
+
+    <TextView
+        android:id="@+id/textOilPresLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="OIL P"
+        android:textColor="@color/telemetry_label"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/textCoolantLabel"
+        app:layout_constraintEnd_toEndOf="@id/textOilPresValue"
+        app:layout_constraintStart_toStartOf="@id/textOilPresValue" />
+
+    <!-- Battery -->
+    <TextView
+        android:id="@+id/textBatteryValue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@id/textCoolantValue"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textOilPresValue" />
+
+    <TextView
+        android:id="@+id/textBatteryLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="BATT"
+        android:textColor="@color/telemetry_label"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@id/textCoolantLabel"
+        app:layout_constraintEnd_toEndOf="@id/textBatteryValue"
+        app:layout_constraintStart_toStartOf="@id/textBatteryValue" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

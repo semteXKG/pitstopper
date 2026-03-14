@@ -12,6 +12,14 @@
     <color name="background_primary">#FF000000</color>
     <color name="text_primary">#FFFFFFFF</color>
     <color name="alert_green">#FF00AA00</color>
+
+    <!-- Telemetry warning/critical colors -->
+    <color name="telemetry_warning">#FFFFCC00</color>
+    <color name="telemetry_critical">#FFFF2222</color>
+    <color name="telemetry_label">#FF888888</color>
+    <color name="brake_touch">#FFFFCC00</color>
+    <color name="brake_pressed">#FFFF2222</color>
+    <color name="throttle_bar">#FF00AA00</color>
     
     <!-- SpeedHive gap trend colors -->
     <color name="gap_positive">#FF00CC00</color>
