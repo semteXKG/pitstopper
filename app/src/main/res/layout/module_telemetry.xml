@@ -63,37 +63,46 @@
 
     <!-- ═══════ TIER 2: Speed + Throttle/Brake (middle zone, 42% – 72%) ═══════ -->
 
-    <!-- Speed value + label (left side) -->
-    <TextView
-        android:id="@+id/textSpeedValue"
+    <!-- Vertical guideline at 50% — aligns mid split with bottom row center -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideMidVertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <!-- Speed value + label (left half, centered) -->
+    <TextView
+        android:id="@+id/textSpeedValue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:fontFamily="monospace"
+        android:gravity="center"
         android:text="--"
         android:textColor="@color/text_primary"
         android:textSize="48sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@id/textSpeedLabel"
-        app:layout_constraintEnd_toStartOf="@id/throttleBrakeGroup"
+        app:layout_constraintEnd_toStartOf="@id/guideMidVertical"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/guideMiddle"
-        app:layout_constraintVertical_chainStyle="packed"
-        app:layout_constraintHorizontal_bias="0.2" />
+        app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
         android:id="@+id/textSpeedLabel"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
+        android:gravity="center"
         android:text="km/h"
         android:textColor="@color/telemetry_label"
         android:textSize="14sp"
         app:layout_constraintBottom_toTopOf="@id/guideBottom"
-        app:layout_constraintEnd_toEndOf="@id/textSpeedValue"
-        app:layout_constraintStart_toStartOf="@id/textSpeedValue"
+        app:layout_constraintEnd_toStartOf="@id/guideMidVertical"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textSpeedValue" />
 
-    <!-- Throttle + Brake group (right side of middle row) -->
+    <!-- Throttle + Brake group (right half of middle row) -->
     <LinearLayout
         android:id="@+id/throttleBrakeGroup"
         android:layout_width="0dp"
@@ -102,10 +111,8 @@
         android:gravity="center"
         app:layout_constraintBottom_toTopOf="@id/guideBottom"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideMiddle"
-        app:layout_constraintWidth_percent="0.55"
-        app:layout_constraintHorizontal_bias="1.0">
+        app:layout_constraintStart_toStartOf="@id/guideMidVertical"
+        app:layout_constraintTop_toBottomOf="@id/guideMiddle">
 
         <!-- Throttle bar -->
         <TextView

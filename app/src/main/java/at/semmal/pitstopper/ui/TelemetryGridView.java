@@ -28,7 +28,7 @@ public class TelemetryGridView extends View {
 
     private static final float GUIDE_MIDDLE = 0.42f;
     private static final float GUIDE_BOTTOM = 0.72f;
-    private static final float MID_VERTICAL = 0.45f;
+    private static final float MID_VERTICAL = 0.50f;
 
     private final Paint gridPaint;
 
