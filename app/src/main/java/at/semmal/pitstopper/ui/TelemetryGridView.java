@@ -64,8 +64,9 @@ public class TelemetryGridView extends View {
         float yMiddle = top + (bottom - top) * GUIDE_MIDDLE;
         float yBottom = top + (bottom - top) * GUIDE_BOTTOM;
 
-        // Outer border
-        canvas.drawRect(left, top, right, bottom, gridPaint);
+        // Outer border — top and bottom lines only (no left/right edges)
+        canvas.drawLine(left, top, right, top, gridPaint);
+        canvas.drawLine(left, bottom, right, bottom, gridPaint);
 
         // Horizontal dividers
         canvas.drawLine(left, yMiddle, right, yMiddle, gridPaint);
