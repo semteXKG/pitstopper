@@ -37,6 +37,10 @@ public class ChatModule extends CenterModule {
         recycler.scrollToPosition(adapter.getItemCount() - 1);
     }
 
+    public RecyclerView getRecyclerView() {
+        return recycler;
+    }
+
     @Override
     public void onActivate() {
         setVisibility(View.VISIBLE);

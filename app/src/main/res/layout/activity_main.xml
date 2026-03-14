@@ -109,7 +109,7 @@
     </LinearLayout>
 
     <!-- Center module container — hosts the active CenterModule view -->
-    <FrameLayout
+    <at.semmal.pitstopper.ui.SwipeInterceptLayout
         android:id="@+id/centerModuleContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
