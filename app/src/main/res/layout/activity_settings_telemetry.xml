@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_primary"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="32dp">
+
+    <TextView
+        android:id="@+id/textTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_telemetry_title"
+        android:textColor="@color/text_primary"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Coolant row -->
+    <TextView
+        android:id="@+id/labelCoolant"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="@string/telemetry_coolant"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textTitle" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/telemetry_warn"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/editCoolantWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editCoolantWarn" />
+
+    <EditText
+        android:id="@+id/editCoolantWarn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/white"
+        android:inputType="number"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideWarn"
+        app:layout_constraintTop_toBottomOf="@id/labelCoolant" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/telemetry_crit"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@id/editCoolantWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editCoolantWarn" />
+
+    <EditText
+        android:id="@+id/editCoolantCrit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:inputType="number"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideCrit"
+        app:layout_constraintTop_toBottomOf="@id/labelCoolant" />
+
+    <CheckBox
+        android:id="@+id/checkCoolantAlarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/telemetry_alarm_enabled"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:buttonTint="@color/text_primary"
+        android:checked="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBaseline_toBaselineOf="@id/editCoolantWarn" />
+
+    <!-- Oil Temp row -->
+    <TextView
+        android:id="@+id/labelOilTemp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/telemetry_oil_temp"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editCoolantWarn" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/telemetry_warn"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/editOilTempWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editOilTempWarn" />
+
+    <EditText
+        android:id="@+id/editOilTempWarn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/white"
+        android:inputType="number"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideWarn"
+        app:layout_constraintTop_toBottomOf="@id/labelOilTemp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/telemetry_crit"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@id/editOilTempWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editOilTempWarn" />
+
+    <EditText
+        android:id="@+id/editOilTempCrit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:inputType="number"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideCrit"
+        app:layout_constraintTop_toBottomOf="@id/labelOilTemp" />
+
+    <CheckBox
+        android:id="@+id/checkOilTempAlarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/telemetry_alarm_enabled"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:buttonTint="@color/text_primary"
+        android:checked="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBaseline_toBaselineOf="@id/editOilTempWarn" />
+
+    <!-- Oil Pressure row -->
+    <TextView
+        android:id="@+id/labelOilPres"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/telemetry_oil_pres"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editOilTempWarn" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/telemetry_warn"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/editOilPresWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editOilPresWarn" />
+
+    <EditText
+        android:id="@+id/editOilPresWarn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/white"
+        android:inputType="numberDecimal"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideWarn"
+        app:layout_constraintTop_toBottomOf="@id/labelOilPres" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/telemetry_crit"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@id/editOilPresWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editOilPresWarn" />
+
+    <EditText
+        android:id="@+id/editOilPresCrit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:inputType="numberDecimal"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideCrit"
+        app:layout_constraintTop_toBottomOf="@id/labelOilPres" />
+
+    <CheckBox
+        android:id="@+id/checkOilPresAlarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/telemetry_alarm_enabled"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:buttonTint="@color/text_primary"
+        android:checked="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBaseline_toBaselineOf="@id/editOilPresWarn" />
+
+    <!-- Battery row -->
+    <TextView
+        android:id="@+id/labelBattery"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/telemetry_battery"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editOilPresWarn" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/telemetry_warn"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/editBatteryWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editBatteryWarn" />
+
+    <EditText
+        android:id="@+id/editBatteryWarn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/white"
+        android:inputType="numberDecimal"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideWarn"
+        app:layout_constraintTop_toBottomOf="@id/labelBattery" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/telemetry_crit"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@id/editBatteryWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editBatteryWarn" />
+
+    <EditText
+        android:id="@+id/editBatteryCrit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:inputType="numberDecimal"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideCrit"
+        app:layout_constraintTop_toBottomOf="@id/labelBattery" />
+
+    <CheckBox
+        android:id="@+id/checkBatteryAlarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/telemetry_alarm_enabled"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:buttonTint="@color/text_primary"
+        android:checked="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBaseline_toBaselineOf="@id/editBatteryWarn" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideWarn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.22" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideCrit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.50" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editBatteryWarn">
+
+        <Button
+            android:id="@+id/buttonCancel"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_marginEnd="16dp"
+            android:layout_weight="1"
+            android:backgroundTint="@android:color/darker_gray"
+            android:text="@string/cancel"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/teal_700"
+            android:text="@string/save"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

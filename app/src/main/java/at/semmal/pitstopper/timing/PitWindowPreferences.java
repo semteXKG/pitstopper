@@ -54,6 +54,30 @@ public class PitWindowPreferences {
     private static final String KEY_SESSION_ID = "external_session_id";
     private static final String KEY_DEVICE_LABEL = "device_label";
 
+    // Telemetry alarm thresholds
+    private static final String KEY_COOLANT_WARN = "coolant_warn";
+    private static final String KEY_COOLANT_CRIT = "coolant_crit";
+    private static final String KEY_COOLANT_ALARM = "coolant_alarm_enabled";
+    private static final String KEY_OIL_TEMP_WARN = "oil_temp_warn";
+    private static final String KEY_OIL_TEMP_CRIT = "oil_temp_crit";
+    private static final String KEY_OIL_TEMP_ALARM = "oil_temp_alarm_enabled";
+    private static final String KEY_OIL_PRES_WARN = "oil_pres_warn";
+    private static final String KEY_OIL_PRES_CRIT = "oil_pres_crit";
+    private static final String KEY_OIL_PRES_ALARM = "oil_pres_alarm_enabled";
+    private static final String KEY_BATTERY_WARN = "battery_warn";
+    private static final String KEY_BATTERY_CRIT = "battery_crit";
+    private static final String KEY_BATTERY_ALARM = "battery_alarm_enabled";
+
+    private static final int DEFAULT_COOLANT_WARN = 100;
+    private static final int DEFAULT_COOLANT_CRIT = 110;
+    private static final int DEFAULT_OIL_TEMP_WARN = 110;
+    private static final int DEFAULT_OIL_TEMP_CRIT = 120;
+    private static final float DEFAULT_OIL_PRES_WARN = 2.0f;
+    private static final float DEFAULT_OIL_PRES_CRIT = 1.0f;
+    private static final float DEFAULT_BATTERY_WARN = 12.5f;
+    private static final float DEFAULT_BATTERY_CRIT = 11.5f;
+    private static final boolean DEFAULT_ALARM_ENABLED = true;
+
     private static final String DEFAULT_MQTT_HOST = "broker";
     private static final int DEFAULT_MQTT_PORT = 1883;
     private static final boolean DEFAULT_MQTT_ENABLED = false;
@@ -273,6 +297,45 @@ public class PitWindowPreferences {
 
     public void saveDeviceLabel(String label) {
         prefs.edit().putString(KEY_DEVICE_LABEL, label).apply();
+    }
+
+    // --- Telemetry alarm thresholds ---
+
+    public int getCoolantWarn()       { return prefs.getInt(KEY_COOLANT_WARN, DEFAULT_COOLANT_WARN); }
+    public int getCoolantCrit()       { return prefs.getInt(KEY_COOLANT_CRIT, DEFAULT_COOLANT_CRIT); }
+    public boolean isCoolantAlarm()   { return prefs.getBoolean(KEY_COOLANT_ALARM, DEFAULT_ALARM_ENABLED); }
+
+    public int getOilTempWarn()       { return prefs.getInt(KEY_OIL_TEMP_WARN, DEFAULT_OIL_TEMP_WARN); }
+    public int getOilTempCrit()       { return prefs.getInt(KEY_OIL_TEMP_CRIT, DEFAULT_OIL_TEMP_CRIT); }
+    public boolean isOilTempAlarm()   { return prefs.getBoolean(KEY_OIL_TEMP_ALARM, DEFAULT_ALARM_ENABLED); }
+
+    public float getOilPresWarn()     { return prefs.getFloat(KEY_OIL_PRES_WARN, DEFAULT_OIL_PRES_WARN); }
+    public float getOilPresCrit()     { return prefs.getFloat(KEY_OIL_PRES_CRIT, DEFAULT_OIL_PRES_CRIT); }
+    public boolean isOilPresAlarm()   { return prefs.getBoolean(KEY_OIL_PRES_ALARM, DEFAULT_ALARM_ENABLED); }
+
+    public float getBatteryWarn()     { return prefs.getFloat(KEY_BATTERY_WARN, DEFAULT_BATTERY_WARN); }
+    public float getBatteryCrit()     { return prefs.getFloat(KEY_BATTERY_CRIT, DEFAULT_BATTERY_CRIT); }
+    public boolean isBatteryAlarm()   { return prefs.getBoolean(KEY_BATTERY_ALARM, DEFAULT_ALARM_ENABLED); }
+
+    public void saveTelemetryAlarms(
+            int coolantWarn, int coolantCrit, boolean coolantAlarm,
+            int oilTempWarn, int oilTempCrit, boolean oilTempAlarm,
+            float oilPresWarn, float oilPresCrit, boolean oilPresAlarm,
+            float batteryWarn, float batteryCrit, boolean batteryAlarm) {
+        prefs.edit()
+            .putInt(KEY_COOLANT_WARN, coolantWarn)
+            .putInt(KEY_COOLANT_CRIT, coolantCrit)
+            .putBoolean(KEY_COOLANT_ALARM, coolantAlarm)
+            .putInt(KEY_OIL_TEMP_WARN, oilTempWarn)
+            .putInt(KEY_OIL_TEMP_CRIT, oilTempCrit)
+            .putBoolean(KEY_OIL_TEMP_ALARM, oilTempAlarm)
+            .putFloat(KEY_OIL_PRES_WARN, oilPresWarn)
+            .putFloat(KEY_OIL_PRES_CRIT, oilPresCrit)
+            .putBoolean(KEY_OIL_PRES_ALARM, oilPresAlarm)
+            .putFloat(KEY_BATTERY_WARN, batteryWarn)
+            .putFloat(KEY_BATTERY_CRIT, batteryCrit)
+            .putBoolean(KEY_BATTERY_ALARM, batteryAlarm)
+            .apply();
     }
 
     // Convenience method to get race start time as formatted string

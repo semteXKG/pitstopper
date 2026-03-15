@@ -45,6 +45,22 @@
             android:exported="false" />
 
         <activity
+            android:name=".activities.SettingsRaceActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.SettingsSpeedHiveActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.SettingsTelemetryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.SettingsMqttActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".activities.SessionActivity"
             android:exported="false" />
 

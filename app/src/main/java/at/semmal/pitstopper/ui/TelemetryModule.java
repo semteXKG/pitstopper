@@ -13,6 +13,7 @@ import java.util.Locale;
 
 import at.semmal.pitstopper.R;
 import at.semmal.pitstopper.model.TelemetryData;
+import at.semmal.pitstopper.timing.PitWindowPreferences;
 
 /**
  * Center module displaying a racing-style telemetry dashboard.
@@ -21,18 +22,23 @@ import at.semmal.pitstopper.model.TelemetryData;
  * → Engine health grid: Coolant, Oil Temp, Oil Pressure, Battery (bottom).
  * <p>
  * Values are color-coded: white (normal), yellow (warning), red (critical).
+ * Thresholds and alarm enable/disable are loaded from preferences.
  */
 public class TelemetryModule extends CenterModule {
 
-    // Warning / critical thresholds
-    private static final int COOLANT_WARN = 100;
-    private static final int COOLANT_CRIT = 110;
-    private static final int OIL_TEMP_WARN = 110;
-    private static final int OIL_TEMP_CRIT = 120;
-    private static final float OIL_PRES_WARN = 2.0f;
-    private static final float OIL_PRES_CRIT = 1.0f;
-    private static final float BATTERY_WARN = 12.5f;
-    private static final float BATTERY_CRIT = 11.5f;
+    // Warning / critical thresholds (loaded from preferences)
+    private int coolantWarn;
+    private int coolantCrit;
+    private boolean coolantAlarm;
+    private int oilTempWarn;
+    private int oilTempCrit;
+    private boolean oilTempAlarm;
+    private float oilPresWarn;
+    private float oilPresCrit;
+    private boolean oilPresAlarm;
+    private float batteryWarn;
+    private float batteryCrit;
+    private boolean batteryAlarm;
 
     private final int colorNormal;
     private final int colorWarning;
@@ -59,9 +65,23 @@ public class TelemetryModule extends CenterModule {
 
     private final TelemetryData data = new TelemetryData();
 
-    public TelemetryModule(Context context) {
+    public TelemetryModule(Context context, PitWindowPreferences preferences) {
         super(context);
         LayoutInflater.from(context).inflate(R.layout.module_telemetry, this, true);
+
+        // Load thresholds from preferences
+        coolantWarn = preferences.getCoolantWarn();
+        coolantCrit = preferences.getCoolantCrit();
+        coolantAlarm = preferences.isCoolantAlarm();
+        oilTempWarn = preferences.getOilTempWarn();
+        oilTempCrit = preferences.getOilTempCrit();
+        oilTempAlarm = preferences.isOilTempAlarm();
+        oilPresWarn = preferences.getOilPresWarn();
+        oilPresCrit = preferences.getOilPresCrit();
+        oilPresAlarm = preferences.isOilPresAlarm();
+        batteryWarn = preferences.getBatteryWarn();
+        batteryCrit = preferences.getBatteryCrit();
+        batteryAlarm = preferences.isBatteryAlarm();
 
         colorNormal = ContextCompat.getColor(context, R.color.text_primary);
         colorWarning = ContextCompat.getColor(context, R.color.telemetry_warning);
@@ -124,7 +144,8 @@ public class TelemetryModule extends CenterModule {
     public void updateCan420(int coolantC, String brakePedal) {
         data.setCan420(coolantC, brakePedal);
         textCoolantValue.setText(String.format(Locale.US, "%d°", coolantC));
-        textCoolantValue.setTextColor(colorForHighValue(coolantC, COOLANT_WARN, COOLANT_CRIT));
+        textCoolantValue.setTextColor(coolantAlarm
+                ? colorForHighValue(coolantC, coolantWarn, coolantCrit) : colorNormal);
         updateBrake(brakePedal);
     }
 
@@ -132,16 +153,19 @@ public class TelemetryModule extends CenterModule {
     public void updateSensors(int oilTemp, float oilPres) {
         data.setSensors(oilTemp, oilPres);
         textOilTempValue.setText(String.format(Locale.US, "%d°", oilTemp));
-        textOilTempValue.setTextColor(colorForHighValue(oilTemp, OIL_TEMP_WARN, OIL_TEMP_CRIT));
+        textOilTempValue.setTextColor(oilTempAlarm
+                ? colorForHighValue(oilTemp, oilTempWarn, oilTempCrit) : colorNormal);
         textOilPresValue.setText(String.format(Locale.US, "%.1f", oilPres));
-        textOilPresValue.setTextColor(colorForLowValue(oilPres, OIL_PRES_WARN, OIL_PRES_CRIT));
+        textOilPresValue.setTextColor(oilPresAlarm
+                ? colorForLowValue(oilPres, oilPresWarn, oilPresCrit) : colorNormal);
     }
 
     /** Update battery voltage from CAN 0x428. Call on main thread. */
     public void updateBattery(float batteryV) {
         data.setBatteryV(batteryV);
         textBatteryValue.setText(String.format(Locale.US, "%.1fV", batteryV));
-        textBatteryValue.setTextColor(colorForLowValue(batteryV, BATTERY_WARN, BATTERY_CRIT));
+        textBatteryValue.setTextColor(batteryAlarm
+                ? colorForLowValue(batteryV, batteryWarn, batteryCrit) : colorNormal);
     }
 
     /** Color for values where HIGH is bad (temp). */

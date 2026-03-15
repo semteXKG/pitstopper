@@ -42,4 +42,27 @@
 
     <!-- External (public) MQTT broker strings -->
     <string name="ext_mqtt_section_title">Public MQTT Broker</string>
+
+    <!-- Settings hub strings -->
+    <string name="settings_hub_race">Race</string>
+    <string name="settings_hub_speedhive">SpeedHive</string>
+    <string name="settings_hub_telemetry">Telemetry</string>
+    <string name="settings_hub_mqtt">MQTT</string>
+    <string name="settings_race_title">Race Timing</string>
+    <string name="settings_speedhive_title">SpeedHive</string>
+    <string name="settings_telemetry_title">Telemetry Alarms</string>
+    <string name="settings_mqtt_title">MQTT</string>
+    <string name="settings_mqtt_local">Local Broker</string>
+    <string name="settings_mqtt_public">Public Broker</string>
+    <string name="back">Back</string>
+
+    <!-- Telemetry alarm strings -->
+    <string name="telemetry_alarms_section">Telemetry Alarms</string>
+    <string name="telemetry_coolant">Coolant Temp (°C)</string>
+    <string name="telemetry_oil_temp">Oil Temp (°C)</string>
+    <string name="telemetry_oil_pres">Oil Pressure (bar)</string>
+    <string name="telemetry_battery">Battery (V)</string>
+    <string name="telemetry_warn">Warn</string>
+    <string name="telemetry_crit">Crit</string>
+    <string name="telemetry_alarm_enabled">Alarm</string>
 </resources>

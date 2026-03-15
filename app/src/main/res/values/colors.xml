@@ -17,6 +17,7 @@
     <color name="telemetry_warning">#FFFFCC00</color>
     <color name="telemetry_critical">#FFFF2222</color>
     <color name="telemetry_label">#FF888888</color>
+    <color name="text_secondary">#FF888888</color>
     <color name="brake_touch">#FFFFCC00</color>
     <color name="brake_pressed">#FFFF2222</color>
     <color name="throttle_bar">#FF00AA00</color>

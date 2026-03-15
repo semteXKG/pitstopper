@@ -137,12 +137,15 @@ public class MainActivity extends AppCompatActivity {
         textGapAhead = findViewById(R.id.textGapAhead);
         textGapBehind = findViewById(R.id.textGapBehind);
 
+        // Initialize preferences early — needed by TelemetryModule
+        preferences = new PitWindowPreferences(this);
+
         // Initialize center modules
         pitTimerModule = new PitTimerModule(this);
         customModule = new CustomModule(this);
         chatModule = new ChatModule(this);
         countdownModule = new CountdownModule(this);
-        telemetryModule = new TelemetryModule(this);
+        telemetryModule = new TelemetryModule(this, preferences);
         centerModuleContainer.addView(pitTimerModule);
         centerModuleContainer.addView(customModule);
         centerModuleContainer.addView(chatModule);
@@ -168,9 +171,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Handle deep link join (pitstopper://join?session=...)
         handleSessionDeepLink(getIntent());
-
-        // Initialize preferences
-        preferences = new PitWindowPreferences(this);
 
         // Initialize time format (24-hour format for racing)
         timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
