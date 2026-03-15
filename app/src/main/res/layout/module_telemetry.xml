@@ -34,32 +34,35 @@
     <!-- ═══════ TIER 1: RPM (top zone, 0% – 42%) ═══════ -->
 
     <TextView
-        android:id="@+id/textRpmValue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="monospace"
-        android:text="--"
-        android:textColor="@color/text_primary"
-        android:textSize="80sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/textRpmLabel"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
-
-    <TextView
         android:id="@+id/textRpmLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
         android:text="RPM"
         android:textColor="@color/telemetry_label"
-        android:textSize="14sp"
+        android:textSize="28sp"
         app:layout_constraintBottom_toTopOf="@id/guideMiddle"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textRpmValue"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        app:autoSizeMaxTextSize="400sp"
+        app:autoSizeMinTextSize="40sp"
+        app:autoSizeStepGranularity="2sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/textRpmLabel"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textRpmValue" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- ═══════ TIER 2: Speed + Throttle/Brake (middle zone, 42% – 72%) ═══════ -->
 
@@ -73,22 +76,6 @@
 
     <!-- Speed value + label (left half, centered) -->
     <TextView
-        android:id="@+id/textSpeedValue"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:fontFamily="monospace"
-        android:gravity="center"
-        android:text="--"
-        android:textColor="@color/text_primary"
-        android:textSize="48sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/textSpeedLabel"
-        app:layout_constraintEnd_toStartOf="@id/guideMidVertical"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideMiddle"
-        app:layout_constraintVertical_chainStyle="packed" />
-
-    <TextView
         android:id="@+id/textSpeedLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -96,11 +83,29 @@
         android:gravity="center"
         android:text="km/h"
         android:textColor="@color/telemetry_label"
-        android:textSize="14sp"
+        android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@id/guideBottom"
         app:layout_constraintEnd_toStartOf="@id/guideMidVertical"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textSpeedValue"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        app:autoSizeMaxTextSize="300sp"
+        app:autoSizeMinTextSize="30sp"
+        app:autoSizeStepGranularity="2sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/textSpeedLabel"
+        app:layout_constraintEnd_toStartOf="@id/guideMidVertical"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textSpeedValue" />
+        app:layout_constraintTop_toBottomOf="@id/guideMiddle" />
 
     <!-- Throttle + Brake group (right half of middle row) -->
     <LinearLayout
@@ -122,12 +127,12 @@
             android:fontFamily="monospace"
             android:text="THR"
             android:textColor="@color/telemetry_label"
-            android:textSize="12sp" />
+            android:textSize="28sp" />
 
         <FrameLayout
             android:id="@+id/throttleBarContainer"
             android:layout_width="match_parent"
-            android:layout_height="24dp"
+            android:layout_height="36dp"
             android:layout_marginTop="2dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
@@ -148,7 +153,7 @@
             android:fontFamily="monospace"
             android:text="-- %"
             android:textColor="@color/text_primary"
-            android:textSize="14sp" />
+            android:textSize="36sp" />
 
         <!-- Brake indicator -->
         <TextView
@@ -159,12 +164,12 @@
             android:fontFamily="monospace"
             android:text="BRK"
             android:textColor="@color/telemetry_label"
-            android:textSize="12sp" />
+            android:textSize="28sp" />
 
         <View
             android:id="@+id/brakeIndicator"
             android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:layout_height="32dp"
             android:layout_marginTop="2dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
@@ -174,24 +179,7 @@
 
     <!-- ═══════ TIER 3: Engine health row (bottom zone, 72% – 100%) ═══════ -->
 
-    <!-- Coolant -->
-    <TextView
-        android:id="@+id/textCoolantValue"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:fontFamily="monospace"
-        android:gravity="center"
-        android:text="--"
-        android:textColor="@color/text_primary"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/textCoolantLabel"
-        app:layout_constraintEnd_toStartOf="@id/textOilTempValue"
-        app:layout_constraintHorizontal_chainStyle="spread"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideBottom"
-        app:layout_constraintVertical_chainStyle="packed" />
-
+    <!-- Labels pinned to parent bottom -->
     <TextView
         android:id="@+id/textCoolantLabel"
         android:layout_width="0dp"
@@ -200,26 +188,11 @@
         android:gravity="center"
         android:text="COOL"
         android:textColor="@color/telemetry_label"
-        android:textSize="12sp"
+        android:textSize="22sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/textCoolantValue"
-        app:layout_constraintStart_toStartOf="@id/textCoolantValue"
-        app:layout_constraintTop_toBottomOf="@id/textCoolantValue" />
-
-    <!-- Oil Temp -->
-    <TextView
-        android:id="@+id/textOilTempValue"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:fontFamily="monospace"
-        android:gravity="center"
-        android:text="--"
-        android:textColor="@color/text_primary"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        app:layout_constraintBaseline_toBaselineOf="@id/textCoolantValue"
-        app:layout_constraintEnd_toStartOf="@id/textOilPresValue"
-        app:layout_constraintStart_toEndOf="@id/textCoolantValue" />
+        app:layout_constraintEnd_toStartOf="@id/textOilTempLabel"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/textOilTempLabel"
@@ -229,25 +202,10 @@
         android:gravity="center"
         android:text="OIL T"
         android:textColor="@color/telemetry_label"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="@id/textCoolantLabel"
-        app:layout_constraintEnd_toEndOf="@id/textOilTempValue"
-        app:layout_constraintStart_toStartOf="@id/textOilTempValue" />
-
-    <!-- Oil Pressure -->
-    <TextView
-        android:id="@+id/textOilPresValue"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:fontFamily="monospace"
-        android:gravity="center"
-        android:text="--"
-        android:textColor="@color/text_primary"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        app:layout_constraintBaseline_toBaselineOf="@id/textCoolantValue"
-        app:layout_constraintEnd_toStartOf="@id/textBatteryValue"
-        app:layout_constraintStart_toEndOf="@id/textOilTempValue" />
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/textOilPresLabel"
+        app:layout_constraintStart_toEndOf="@id/textCoolantLabel" />
 
     <TextView
         android:id="@+id/textOilPresLabel"
@@ -257,25 +215,10 @@
         android:gravity="center"
         android:text="OIL P"
         android:textColor="@color/telemetry_label"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="@id/textCoolantLabel"
-        app:layout_constraintEnd_toEndOf="@id/textOilPresValue"
-        app:layout_constraintStart_toStartOf="@id/textOilPresValue" />
-
-    <!-- Battery -->
-    <TextView
-        android:id="@+id/textBatteryValue"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:fontFamily="monospace"
-        android:gravity="center"
-        android:text="--"
-        android:textColor="@color/text_primary"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        app:layout_constraintBaseline_toBaselineOf="@id/textCoolantValue"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/textOilPresValue" />
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/textBatteryLabel"
+        app:layout_constraintStart_toEndOf="@id/textOilTempLabel" />
 
     <TextView
         android:id="@+id/textBatteryLabel"
@@ -285,9 +228,86 @@
         android:gravity="center"
         android:text="BATT"
         android:textColor="@color/telemetry_label"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="@id/textCoolantLabel"
-        app:layout_constraintEnd_toEndOf="@id/textBatteryValue"
-        app:layout_constraintStart_toStartOf="@id/textBatteryValue" />
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textOilPresLabel" />
+
+    <!-- Auto-sized values filling space above labels -->
+    <TextView
+        android:id="@+id/textCoolantValue"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        app:autoSizeMaxTextSize="200sp"
+        app:autoSizeMinTextSize="20sp"
+        app:autoSizeStepGranularity="2sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/textCoolantLabel"
+        app:layout_constraintEnd_toEndOf="@id/textCoolantLabel"
+        app:layout_constraintStart_toStartOf="@id/textCoolantLabel"
+        app:layout_constraintTop_toBottomOf="@id/guideBottom" />
+
+    <TextView
+        android:id="@+id/textOilTempValue"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        app:autoSizeMaxTextSize="200sp"
+        app:autoSizeMinTextSize="20sp"
+        app:autoSizeStepGranularity="2sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/textOilTempLabel"
+        app:layout_constraintEnd_toEndOf="@id/textOilTempLabel"
+        app:layout_constraintStart_toStartOf="@id/textOilTempLabel"
+        app:layout_constraintTop_toBottomOf="@id/guideBottom" />
+
+    <TextView
+        android:id="@+id/textOilPresValue"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        app:autoSizeMaxTextSize="200sp"
+        app:autoSizeMinTextSize="20sp"
+        app:autoSizeStepGranularity="2sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/textOilPresLabel"
+        app:layout_constraintEnd_toEndOf="@id/textOilPresLabel"
+        app:layout_constraintStart_toStartOf="@id/textOilPresLabel"
+        app:layout_constraintTop_toBottomOf="@id/guideBottom" />
+
+    <TextView
+        android:id="@+id/textBatteryValue"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="--"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        app:autoSizeMaxTextSize="200sp"
+        app:autoSizeMinTextSize="20sp"
+        app:autoSizeStepGranularity="2sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/textBatteryLabel"
+        app:layout_constraintEnd_toEndOf="@id/textBatteryLabel"
+        app:layout_constraintStart_toStartOf="@id/textBatteryLabel"
+        app:layout_constraintTop_toBottomOf="@id/guideBottom" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
