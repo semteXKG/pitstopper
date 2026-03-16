@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
     // MQTT
     private MqttClientManager mqttClientManager;
     private MqttClientManager.StateListener mqttButtonsListener;
+    private MqttClientManager.StateListener mqttTelemetryListener;
     private boolean buttonsSubscribed = false;
     private boolean telemetrySubscribed = false;
     private boolean flashMessageActive = false;
@@ -359,12 +360,6 @@ public class MainActivity extends AppCompatActivity {
             countdownModule.cancelCountdown();
         }
 
-        // Unsubscribe MQTT button state listener (topic subscription stays active)
-        if (mqttButtonsListener != null) {
-            mqttClientManager.removeStateListener(mqttButtonsListener);
-            mqttButtonsListener = null;
-        }
-
         // Stop GPS monitoring to save battery
         if (standstillDetector != null) {
             standstillDetector.stopMonitoring();
@@ -380,6 +375,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mqttButtonsListener != null) {
+            mqttClientManager.removeStateListener(mqttButtonsListener);
+            mqttButtonsListener = null;
+        }
+        if (mqttTelemetryListener != null) {
+            mqttClientManager.removeStateListener(mqttTelemetryListener);
+            mqttTelemetryListener = null;
+        }
         if (speechToTextManager != null) {
             speechToTextManager.destroy();
         }
@@ -426,33 +429,41 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Subscribe to fiesta/buttons MQTT topic to receive physical button events.
      * Subscribes immediately if already connected, otherwise waits for connection.
+     * Resets and re-subscribes automatically after any reconnect.
      */
     private void subscribeToButtons() {
-        if (buttonsSubscribed) return;
-        if (mqttClientManager.isConnected()) {
-            mqttClientManager.subscribe("fiesta/buttons", this::handleButtonMessage);
-            buttonsSubscribed = true;
-        } else {
-            mqttButtonsListener = (state, error) -> {
-                if (state == MqttClientManager.State.CONNECTED && !buttonsSubscribed) {
+        mqttButtonsListener = (state, error) -> {
+            if (state == MqttClientManager.State.CONNECTED) {
+                if (!buttonsSubscribed) {
                     mqttClientManager.subscribe("fiesta/buttons", this::handleButtonMessage);
                     buttonsSubscribed = true;
                 }
-            };
-            mqttClientManager.addStateListener(mqttButtonsListener);
+            } else if (state == MqttClientManager.State.DISCONNECTED
+                    || state == MqttClientManager.State.CONNECTING) {
+                buttonsSubscribed = false;
+            }
+        };
+        mqttClientManager.addStateListener(mqttButtonsListener);
+        if (mqttClientManager.isConnected() && !buttonsSubscribed) {
+            mqttClientManager.subscribe("fiesta/buttons", this::handleButtonMessage);
+            buttonsSubscribed = true;
         }
     }
 
     private void subscribeToTelemetry() {
-        if (telemetrySubscribed) return;
-        if (mqttClientManager.isConnected()) {
-            doSubscribeTelemetry();
-        } else {
-            mqttClientManager.addStateListener((state, error) -> {
-                if (state == MqttClientManager.State.CONNECTED && !telemetrySubscribed) {
+        mqttTelemetryListener = (state, error) -> {
+            if (state == MqttClientManager.State.CONNECTED) {
+                if (!telemetrySubscribed) {
                     doSubscribeTelemetry();
                 }
-            });
+            } else if (state == MqttClientManager.State.DISCONNECTED
+                    || state == MqttClientManager.State.CONNECTING) {
+                telemetrySubscribed = false;
+            }
+        };
+        mqttClientManager.addStateListener(mqttTelemetryListener);
+        if (mqttClientManager.isConnected() && !telemetrySubscribed) {
+            doSubscribeTelemetry();
         }
     }
 

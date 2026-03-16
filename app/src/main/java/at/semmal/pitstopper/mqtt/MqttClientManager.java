@@ -32,6 +32,7 @@ public class MqttClientManager {
     private Mqtt3AsyncClient client;
     private State currentState = State.DISCONNECTED;
     private String lastError = null;
+    private volatile boolean disconnecting = false;
 
     private final List<StateListener> listeners = new CopyOnWriteArrayList<>();
 
@@ -62,6 +63,7 @@ public class MqttClientManager {
         }
 
         Log.i(TAG, "Connecting to MQTT broker at " + host + ":" + port);
+        disconnecting = false;
         setState(State.CONNECTING, null);
 
         if (client != null) {
@@ -86,6 +88,11 @@ public class MqttClientManager {
                 .addDisconnectedListener((MqttClientDisconnectedContext ctx) -> {
                     Throwable cause = ctx.getCause();
                     if (ctx.getReconnector().isReconnect()) {
+                        if (disconnecting) {
+                            // User explicitly disconnected — cancel the pending auto-reconnect.
+                            ctx.getReconnector().reconnect(false);
+                            return;
+                        }
                         Log.w(TAG, "MQTT disconnected, will reconnect: " + cause.getMessage());
                         setState(State.CONNECTING, null);
                     } else {
@@ -111,8 +118,10 @@ public class MqttClientManager {
             return;
         }
         Log.i(TAG, "Disconnecting from MQTT broker");
+        disconnecting = true;
         client.disconnect()
                 .whenComplete((v, throwable) -> {
+                    disconnecting = false;
                     client = null;
                     setState(State.DISCONNECTED, null);
                 });
