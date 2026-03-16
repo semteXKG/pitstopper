@@ -2,6 +2,7 @@ package at.semmal.pitstopper.activities;
 
 import at.semmal.pitstopper.mqtt.MqttClientManager;
 import at.semmal.pitstopper.mqtt.ExternalSessionManager;
+import at.semmal.pitstopper.mqtt.LocalTcpProxy;
 import at.semmal.pitstopper.mqtt.WifiNetworkManager;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 
@@ -19,6 +20,8 @@ public class PitStopperApplication extends Application {
     private MqttClientManager mqttClientManager;
     private ExternalSessionManager externalSessionManager;
     private WifiNetworkManager wifiNetworkManager;
+    private LocalTcpProxy cellularProxy;
+    private ConnectivityManager.NetworkCallback cellularCallback;
 
     @Override
     public void onCreate() {
@@ -51,8 +54,59 @@ public class PitStopperApplication extends Application {
         String sessionId = preferences.getSessionId();
         if (sessionId != null && preferences.isExtMqttEnabled()) {
             Log.i(TAG, "Restoring external session: " + sessionId.substring(0, 8) + "...");
-            externalSessionManager.connect(sessionId, preferences.getExtMqttHost(), preferences.getExtMqttPort());
+            setupCellularProxy(preferences);
         }
+    }
+
+    /**
+     * Requests the cellular network and starts a LocalTcpProxy bound to it so that
+     * ExternalSessionManager (public broker) can route through GSM even when WiFi
+     * is the default network (car hotspot has no internet).
+     */
+    private void setupCellularProxy(PitWindowPreferences preferences) {
+        cellularProxy = new LocalTcpProxy();
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+
+        NetworkRequest cellRequest = new NetworkRequest.Builder()
+                .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build();
+
+        cellularCallback = new ConnectivityManager.NetworkCallback() {
+            private volatile boolean proxyStarted = false;
+
+            @Override
+            public void onAvailable(Network network) {
+                if (proxyStarted) return;
+                proxyStarted = true;
+                String host = preferences.getExtMqttHost();
+                int port = preferences.getExtMqttPort();
+                try {
+                    cellularProxy.start(network, host, port);
+                    int proxyPort = cellularProxy.getLocalPort();
+                    Log.i(TAG, "Cellular proxy started on port " + proxyPort
+                            + " → " + host + ":" + port);
+                    String sid = preferences.getSessionId();
+                    if (sid != null) {
+                        new android.os.Handler(android.os.Looper.getMainLooper()).post(
+                                () -> externalSessionManager.connect(sid, "127.0.0.1", proxyPort));
+                    }
+                } catch (java.io.IOException e) {
+                    Log.e(TAG, "Failed to start cellular proxy: " + e.getMessage());
+                    proxyStarted = false;
+                }
+            }
+
+            @Override
+            public void onLost(Network network) {
+                Log.w(TAG, "Cellular network lost — external MQTT will disconnect");
+                proxyStarted = false;
+                cellularProxy.stop();
+                externalSessionManager.disconnect();
+            }
+        };
+
+        cm.requestNetwork(cellRequest, cellularCallback);
     }
 
     /**
@@ -121,5 +175,41 @@ public class PitStopperApplication extends Application {
 
     public WifiNetworkManager getWifiNetworkManager() {
         return wifiNetworkManager;
+    }
+
+    /**
+     * Connect the external session through the cellular proxy.
+     * Called from SessionActivity when the user connects/creates/restores a session.
+     */
+    public void connectExternalSession(String sessionId, String host, int port) {
+        PitWindowPreferences prefs = new PitWindowPreferences(this);
+        prefs.saveExtMqttSettings(host, port, true);
+        if (cellularProxy != null && cellularProxy.isRunning()) {
+            // Cellular proxy already up — connect through it
+            int proxyPort = cellularProxy.getLocalPort();
+            Log.i(TAG, "Connecting external session via cellular proxy port " + proxyPort);
+            externalSessionManager.connect(sessionId, "127.0.0.1", proxyPort);
+        } else {
+            // No cellular proxy yet — start one
+            Log.i(TAG, "Starting cellular proxy for external session");
+            setupCellularProxy(prefs);
+        }
+    }
+
+    /**
+     * Disconnect the external session and stop the cellular proxy.
+     */
+    public void disconnectExternalSession() {
+        externalSessionManager.disconnect();
+        if (cellularProxy != null) {
+            cellularProxy.stop();
+        }
+        if (cellularCallback != null) {
+            try {
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+                cm.unregisterNetworkCallback(cellularCallback);
+            } catch (Exception ignored) {}
+            cellularCallback = null;
+        }
     }
 }

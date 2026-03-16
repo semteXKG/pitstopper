@@ -72,7 +72,8 @@ public class SessionActivity extends AppCompatActivity {
         String sessionId = preferences.getSessionId();
         if (sessionId == null) {
             sessionId = preferences.generateAndSaveNewSessionId();
-            sessionManager.connect(sessionId);
+            ((PitStopperApplication) getApplication()).connectExternalSession(sessionId,
+                    preferences.getExtMqttHost(), preferences.getExtMqttPort());
         }
         showSession(sessionId);
 
@@ -102,8 +103,10 @@ public class SessionActivity extends AppCompatActivity {
 
     private void createNewSession() {
         String sessionId = preferences.generateAndSaveNewSessionId();
-        sessionManager.disconnect();
-        sessionManager.connect(sessionId);
+        PitStopperApplication app = (PitStopperApplication) getApplication();
+        app.disconnectExternalSession();
+        app.connectExternalSession(sessionId,
+                preferences.getExtMqttHost(), preferences.getExtMqttPort());
         showSession(sessionId);
         Toast.makeText(this, "New session created", Toast.LENGTH_SHORT).show();
     }
@@ -115,7 +118,8 @@ public class SessionActivity extends AppCompatActivity {
             return;
         }
         if (!sessionManager.isConnected()) {
-            sessionManager.connect(sessionId);
+            ((PitStopperApplication) getApplication()).connectExternalSession(sessionId,
+                    preferences.getExtMqttHost(), preferences.getExtMqttPort());
         }
         showSession(sessionId);
         Toast.makeText(this, "Session restored", Toast.LENGTH_SHORT).show();
@@ -180,10 +184,11 @@ public class SessionActivity extends AppCompatActivity {
     }
 
     private void toggleExtMqttConnection() {
+        PitStopperApplication app = (PitStopperApplication) getApplication();
         MqttClientManager.State state = sessionManager.getState();
         if (state == MqttClientManager.State.CONNECTED || state == MqttClientManager.State.CONNECTING) {
             preferences.saveExtMqttSettings(preferences.getExtMqttHost(), preferences.getExtMqttPort(), false);
-            sessionManager.disconnect();
+            app.disconnectExternalSession();
         } else {
             String host = preferences.getExtMqttHost();
             int port = preferences.getExtMqttPort();
@@ -197,7 +202,7 @@ public class SessionActivity extends AppCompatActivity {
                 return;
             }
             preferences.saveExtMqttSettings(host, port, true);
-            sessionManager.connect(sessionId, host, port);
+            app.connectExternalSession(sessionId, host, port);
         }
     }
 }
