@@ -22,6 +22,7 @@ public class PitStopperApplication extends Application {
     private WifiNetworkManager wifiNetworkManager;
     private LocalTcpProxy cellularProxy;
     private ConnectivityManager.NetworkCallback cellularCallback;
+    private volatile Network cellularNetwork;
 
     @Override
     public void onCreate() {
@@ -40,6 +41,9 @@ public class PitStopperApplication extends Application {
             setupWifiMqttCoordinator(preferences);
             wifiNetworkManager.bind(preferredSsid,
                     preferences.getMqttHost(), preferences.getMqttPort());
+
+            // Request cellular network for SpeedHive API + external MQTT
+            requestCellularNetwork(preferences);
         } else {
             if (preferences.isMqttEnabled()) {
                 Log.i(TAG, "Auto-connecting to MQTT broker on startup");
@@ -49,21 +53,23 @@ public class PitStopperApplication extends Application {
             if (preferences.isMqttEnabled()) {
                 registerNetworkReconnectCallback(preferences);
             }
-        }
-
-        String sessionId = preferences.getSessionId();
-        if (sessionId != null && preferences.isExtMqttEnabled()) {
-            Log.i(TAG, "Restoring external session: " + sessionId.substring(0, 8) + "...");
-            setupCellularProxy(preferences);
+            // External session can connect directly when WiFi isn't bound
+            String sessionId = preferences.getSessionId();
+            if (sessionId != null && preferences.isExtMqttEnabled()) {
+                Log.i(TAG, "Restoring external session: " + sessionId.substring(0, 8) + "...");
+                externalSessionManager.connect(sessionId,
+                        preferences.getExtMqttHost(), preferences.getExtMqttPort());
+            }
         }
     }
 
     /**
-     * Requests the cellular network and starts a LocalTcpProxy bound to it so that
-     * ExternalSessionManager (public broker) can route through GSM even when WiFi
-     * is the default network (car hotspot has no internet).
+     * Requests the cellular network so that SpeedHive API and external MQTT can
+     * route through GSM even when WiFi (car hotspot, no internet) is the default.
+     * Stores the Network for SpeedHive's HttpURLConnection and starts a proxy
+     * for external MQTT if a session is configured.
      */
-    private void setupCellularProxy(PitWindowPreferences preferences) {
+    private void requestCellularNetwork(PitWindowPreferences preferences) {
         cellularProxy = new LocalTcpProxy();
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 
@@ -77,29 +83,33 @@ public class PitStopperApplication extends Application {
 
             @Override
             public void onAvailable(Network network) {
-                if (proxyStarted) return;
-                proxyStarted = true;
-                String host = preferences.getExtMqttHost();
-                int port = preferences.getExtMqttPort();
-                try {
-                    cellularProxy.start(network, host, port);
-                    int proxyPort = cellularProxy.getLocalPort();
-                    Log.i(TAG, "Cellular proxy started on port " + proxyPort
-                            + " → " + host + ":" + port);
-                    String sid = preferences.getSessionId();
-                    if (sid != null) {
+                cellularNetwork = network;
+                Log.i(TAG, "Cellular network available");
+
+                // Start external MQTT proxy if session is configured
+                String sid = preferences.getSessionId();
+                if (sid != null && preferences.isExtMqttEnabled() && !proxyStarted) {
+                    proxyStarted = true;
+                    String host = preferences.getExtMqttHost();
+                    int port = preferences.getExtMqttPort();
+                    try {
+                        cellularProxy.start(network, host, port);
+                        int proxyPort = cellularProxy.getLocalPort();
+                        Log.i(TAG, "Cellular proxy started on port " + proxyPort
+                                + " → " + host + ":" + port);
                         new android.os.Handler(android.os.Looper.getMainLooper()).post(
                                 () -> externalSessionManager.connect(sid, "127.0.0.1", proxyPort));
+                    } catch (java.io.IOException e) {
+                        Log.e(TAG, "Failed to start cellular proxy: " + e.getMessage());
+                        proxyStarted = false;
                     }
-                } catch (java.io.IOException e) {
-                    Log.e(TAG, "Failed to start cellular proxy: " + e.getMessage());
-                    proxyStarted = false;
                 }
             }
 
             @Override
             public void onLost(Network network) {
-                Log.w(TAG, "Cellular network lost — external MQTT will disconnect");
+                Log.w(TAG, "Cellular network lost");
+                cellularNetwork = null;
                 proxyStarted = false;
                 cellularProxy.stop();
                 externalSessionManager.disconnect();
@@ -177,6 +187,11 @@ public class PitStopperApplication extends Application {
         return wifiNetworkManager;
     }
 
+    /** Returns the cellular Network for routing HTTP calls, or null if unavailable. */
+    public Network getCellularNetwork() {
+        return cellularNetwork;
+    }
+
     /**
      * Connect the external session through the cellular proxy.
      * Called from SessionActivity when the user connects/creates/restores a session.
@@ -185,14 +200,23 @@ public class PitStopperApplication extends Application {
         PitWindowPreferences prefs = new PitWindowPreferences(this);
         prefs.saveExtMqttSettings(host, port, true);
         if (cellularProxy != null && cellularProxy.isRunning()) {
-            // Cellular proxy already up — connect through it
             int proxyPort = cellularProxy.getLocalPort();
             Log.i(TAG, "Connecting external session via cellular proxy port " + proxyPort);
             externalSessionManager.connect(sessionId, "127.0.0.1", proxyPort);
+        } else if (cellularNetwork != null) {
+            // Have cellular network but proxy not started yet — start it
+            try {
+                cellularProxy.start(cellularNetwork, host, port);
+                int proxyPort = cellularProxy.getLocalPort();
+                Log.i(TAG, "Cellular proxy started on port " + proxyPort);
+                externalSessionManager.connect(sessionId, "127.0.0.1", proxyPort);
+            } catch (java.io.IOException e) {
+                Log.e(TAG, "Failed to start cellular proxy: " + e.getMessage());
+            }
         } else {
-            // No cellular proxy yet — start one
-            Log.i(TAG, "Starting cellular proxy for external session");
-            setupCellularProxy(prefs);
+            // No cellular yet — request it
+            Log.i(TAG, "Requesting cellular network for external session");
+            requestCellularNetwork(prefs);
         }
     }
 
@@ -204,12 +228,6 @@ public class PitStopperApplication extends Application {
         if (cellularProxy != null) {
             cellularProxy.stop();
         }
-        if (cellularCallback != null) {
-            try {
-                ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-                cm.unregisterNetworkCallback(cellularCallback);
-            } catch (Exception ignored) {}
-            cellularCallback = null;
-        }
+        // Don't unregister cellular callback — SpeedHive still needs it
     }
 }

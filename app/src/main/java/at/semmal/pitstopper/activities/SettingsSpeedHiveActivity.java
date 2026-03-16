@@ -106,6 +106,8 @@ public class SettingsSpeedHiveActivity extends AppCompatActivity {
     private SpeedHiveManager getSpeedHiveManager() {
         if (speedHiveManager == null) {
             speedHiveManager = new SpeedHiveManager(this);
+            speedHiveManager.setCellularNetwork(
+                    ((PitStopperApplication) getApplication()).getCellularNetwork());
         }
         return speedHiveManager;
     }

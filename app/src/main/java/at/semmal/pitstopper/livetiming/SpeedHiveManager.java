@@ -7,6 +7,7 @@ import at.semmal.pitstopper.model.SpeedHiveEvent;
 import at.semmal.pitstopper.model.SpeedHiveSession;
 
 import android.content.Context;
+import android.net.Network;
 import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,6 +40,7 @@ public class SpeedHiveManager {
     
     private final SpeedHiveConfig config;
     private final ExecutorService executor;
+    private volatile Network cellularNetwork;
     
     /**
      * Callback interface for live timing data requests.
@@ -65,6 +67,11 @@ public class SpeedHiveManager {
         this.config = new SpeedHiveConfig(context);
         this.executor = Executors.newSingleThreadExecutor();
         Log.i(TAG, "SpeedHive manager initialized");
+    }
+
+    /** Set the cellular network to route API calls through (bypasses WiFi). */
+    public void setCellularNetwork(Network network) {
+        this.cellularNetwork = network;
     }
     
     /**
@@ -372,7 +379,13 @@ public class SpeedHiveManager {
 
     private HttpURLConnection createConnection(String urlString) throws IOException {
         URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        HttpURLConnection connection;
+        Network net = cellularNetwork;
+        if (net != null) {
+            connection = (HttpURLConnection) net.openConnection(url);
+        } else {
+            connection = (HttpURLConnection) url.openConnection();
+        }
         connection.setRequestMethod("GET");
         connection.setRequestProperty("ApiKey", config.getApiKey());
         connection.setRequestProperty("User-Agent", config.getUserAgent());

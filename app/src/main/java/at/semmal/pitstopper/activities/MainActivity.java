@@ -826,6 +826,8 @@ public class MainActivity extends AppCompatActivity {
                 // Create real SpeedHive manager
                 try {
                     speedHiveManager = new SpeedHiveManager(this);
+                    speedHiveManager.setCellularNetwork(
+                            ((PitStopperApplication) getApplication()).getCellularNetwork());
                     Log.i(TAG, "SpeedHive API manager initialized");
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to initialize SpeedHive manager", e);
