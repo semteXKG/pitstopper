@@ -24,6 +24,62 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- ==================== WiFi Binding Section ==================== -->
+    <TextView
+        android:id="@+id/labelWifiSection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/settings_wifi_title"
+        android:textColor="@color/text_primary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textTitle" />
+
+    <EditText
+        android:id="@+id/editWifiSsid"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@color/white"
+        android:hint="@string/wifi_ssid_hint"
+        android:inputType="textNoSuggestions"
+        android:minHeight="56dp"
+        android:padding="16dp"
+        android:textColor="@color/black"
+        android:textColorHint="@android:color/darker_gray"
+        android:textSize="24sp"
+        android:importantForAutofill="no"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelWifiSection" />
+
+    <TextView
+        android:id="@+id/textWifiStatus"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/wifi_status_inactive"
+        android:textColor="@color/text_secondary"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editWifiSsid" />
+
+    <Button
+        android:id="@+id/buttonSwitchWifi"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#F44336"
+        android:text="@string/wifi_switch_button"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textWifiStatus" />
+
     <!-- ==================== Local Broker Section ==================== -->
     <TextView
         android:id="@+id/labelLocalSection"
@@ -35,7 +91,7 @@
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textTitle" />
+        app:layout_constraintTop_toBottomOf="@id/buttonSwitchWifi" />
 
     <TextView
         android:id="@+id/labelMqttHost"

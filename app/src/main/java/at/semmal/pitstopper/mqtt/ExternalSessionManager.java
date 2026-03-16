@@ -30,6 +30,21 @@ public class ExternalSessionManager {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String sessionId;
     private SessionEventListener eventListener;
+    private boolean topicSubscribed = false;
+
+    public ExternalSessionManager() {
+        // Single persistent listener — handles both initial connect and reconnects.
+        mqtt.addStateListener((state, error) -> {
+            if (state == MqttClientManager.State.CONNECTED) {
+                if (!topicSubscribed) {
+                    subscribeToTopic();
+                }
+            } else if (state == MqttClientManager.State.DISCONNECTED
+                    || state == MqttClientManager.State.CONNECTING) {
+                topicSubscribed = false;
+            }
+        });
+    }
 
     /** Connect to the public broker using saved settings and subscribe to the session topic. */
     public void connect(String sessionId) {
@@ -39,11 +54,6 @@ public class ExternalSessionManager {
     /** Connect to a specific broker and subscribe to the session topic. */
     public void connect(String sessionId, String host, int port) {
         this.sessionId = sessionId;
-        mqtt.addStateListener((state, error) -> {
-            if (state == MqttClientManager.State.CONNECTED) {
-                subscribeToTopic();
-            }
-        });
         mqtt.connect(host, port);
     }
 
@@ -125,6 +135,7 @@ public class ExternalSessionManager {
                 Log.w(TAG, "Malformed chat payload");
             }
         });
+        topicSubscribed = true;
         Log.i(TAG, "Subscribed to " + buildTopic());
     }
 

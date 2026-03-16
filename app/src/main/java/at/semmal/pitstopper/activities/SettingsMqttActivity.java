@@ -4,6 +4,7 @@ import at.semmal.pitstopper.R;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 import at.semmal.pitstopper.mqtt.MqttClientManager;
 import at.semmal.pitstopper.mqtt.ExternalSessionManager;
+import at.semmal.pitstopper.mqtt.WifiNetworkManager;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -27,6 +29,12 @@ public class SettingsMqttActivity extends AppCompatActivity {
     private PitWindowPreferences preferences;
     private MqttClientManager mqttClientManager;
     private ExternalSessionManager extMqtt;
+    private WifiNetworkManager wifiNetworkManager;
+
+    // WiFi binding views
+    private EditText editWifiSsid;
+    private TextView textWifiStatus;
+    private Button buttonSwitchWifi;
 
     // Local broker views
     private EditText editMqttHost, editMqttPort;
@@ -40,6 +48,7 @@ public class SettingsMqttActivity extends AppCompatActivity {
 
     private MqttClientManager.StateListener mqttStateListener;
     private MqttClientManager.StateListener extMqttStateListener;
+    private WifiNetworkManager.StateListener wifiStateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +59,12 @@ public class SettingsMqttActivity extends AppCompatActivity {
         preferences = new PitWindowPreferences(this);
         mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
         extMqtt = ((PitStopperApplication) getApplication()).getExternalSessionManager();
+        wifiNetworkManager = ((PitStopperApplication) getApplication()).getWifiNetworkManager();
+
+        // WiFi binding views
+        editWifiSsid = findViewById(R.id.editWifiSsid);
+        textWifiStatus = findViewById(R.id.textWifiStatus);
+        buttonSwitchWifi = findViewById(R.id.buttonSwitchWifi);
 
         // Local broker views
         editMqttHost = findViewById(R.id.editMqttHost);
@@ -66,8 +81,85 @@ public class SettingsMqttActivity extends AppCompatActivity {
         Button buttonBack = findViewById(R.id.buttonBack);
         buttonBack.setOnClickListener(v -> finish());
 
+        setupWifiBinding();
         setupLocalMqtt();
         setupPublicMqtt();
+    }
+
+    // ===================== WiFi Binding =====================
+
+    private android.os.Handler wifiDebounceHandler = new android.os.Handler(Looper.getMainLooper());
+    private Runnable wifiDebounceRunnable;
+
+    private void setupWifiBinding() {
+        String saved = preferences.getPreferredWifiSsid();
+        if (saved != null) editWifiSsid.setText(saved);
+
+        editWifiSsid.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (wifiDebounceRunnable != null) {
+                    wifiDebounceHandler.removeCallbacks(wifiDebounceRunnable);
+                }
+                wifiDebounceRunnable = () -> {
+                    String ssid = s.toString().trim();
+                    if (ssid.isEmpty()) {
+                        preferences.savePreferredWifiSsid(null);
+                        wifiNetworkManager.release();
+                    } else {
+                        preferences.savePreferredWifiSsid(ssid);
+                        wifiNetworkManager.bind(ssid,
+                                preferences.getMqttHost(), preferences.getMqttPort());
+                    }
+                };
+                wifiDebounceHandler.postDelayed(wifiDebounceRunnable, 800);
+            }
+        });
+
+        buttonSwitchWifi.setOnClickListener(v ->
+                startActivity(new android.content.Intent(
+                        android.provider.Settings.Panel.ACTION_WIFI)));
+
+        wifiStateListener = (state, ssid) ->
+                mainHandler.post(() -> updateWifiStatusUi(state, ssid));
+        wifiNetworkManager.addStateListener(wifiStateListener);
+        updateWifiStatusUi(wifiNetworkManager.getState(), wifiNetworkManager.getCurrentSsid());
+    }
+
+    private void updateWifiStatusUi(WifiNetworkManager.State state, String ssid) {
+        buttonSwitchWifi.setVisibility(View.GONE);
+        switch (state) {
+            case BOUND:
+                textWifiStatus.setText(getString(R.string.wifi_status_bound, ssid));
+                textWifiStatus.setTextColor(Color.parseColor("#4CAF50"));
+                break;
+            case REQUESTING:
+                textWifiStatus.setText(R.string.wifi_status_requesting);
+                textWifiStatus.setTextColor(Color.parseColor("#FFC107"));
+                break;
+            case UNAVAILABLE:
+                textWifiStatus.setText(R.string.wifi_status_unavailable);
+                textWifiStatus.setTextColor(Color.parseColor("#F44336"));
+                break;
+            case WRONG_NETWORK:
+                String actual = wifiNetworkManager.getConnectedSsid();
+                if (actual == null) actual = "?";
+                String target = ssid != null ? ssid : "?";
+                textWifiStatus.setText(getString(R.string.wifi_status_wrong_network, actual, target));
+                textWifiStatus.setTextColor(Color.parseColor("#F44336"));
+                textWifiStatus.setTextSize(20);
+                buttonSwitchWifi.setVisibility(View.VISIBLE);
+                break;
+            default:
+                textWifiStatus.setText(R.string.wifi_status_inactive);
+                textWifiStatus.setTextColor(Color.parseColor("#9E9E9E"));
+                break;
+        }
+        if (state != WifiNetworkManager.State.WRONG_NETWORK) {
+            textWifiStatus.setTextSize(16);
+        }
     }
 
     // ===================== Local Broker =====================
@@ -274,6 +366,9 @@ public class SettingsMqttActivity extends AppCompatActivity {
         }
         if (extMqttStateListener != null) {
             extMqtt.removeStateListener(extMqttStateListener);
+        }
+        if (wifiStateListener != null) {
+            wifiNetworkManager.removeStateListener(wifiStateListener);
         }
     }
 

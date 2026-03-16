@@ -31,6 +31,9 @@ public class PitWindowPreferences {
     private static final String KEY_EXT_MQTT_PORT = "ext_mqtt_port";
     private static final String KEY_EXT_MQTT_ENABLED = "ext_mqtt_enabled";
 
+    // WiFi binding — null/absent means "use system WiFi" (no binding)
+    private static final String KEY_PREFERRED_WIFI_SSID = "preferred_wifi_ssid";
+
     // Default values
     private static final int DEFAULT_RACE_START_HOUR = 9;
     private static final int DEFAULT_RACE_START_MINUTE = 0;
@@ -252,6 +255,20 @@ public class PitWindowPreferences {
             .putInt(KEY_EXT_MQTT_PORT, port)
             .putBoolean(KEY_EXT_MQTT_ENABLED, enabled)
             .apply();
+    }
+
+    /** Returns the preferred WiFi SSID for MQTT binding, or null if disabled. */
+    public String getPreferredWifiSsid() {
+        return prefs.getString(KEY_PREFERRED_WIFI_SSID, null);
+    }
+
+    /** Save preferred WiFi SSID. Pass null to disable WiFi binding. */
+    public void savePreferredWifiSsid(String ssid) {
+        if (ssid == null) {
+            prefs.edit().remove(KEY_PREFERRED_WIFI_SSID).apply();
+        } else {
+            prefs.edit().putString(KEY_PREFERRED_WIFI_SSID, ssid).apply();
+        }
     }
 
     // SpeedHive convenience methods

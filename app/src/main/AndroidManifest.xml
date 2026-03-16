@@ -9,6 +9,12 @@
     <!-- Internet permission for SpeedHive Live Timing API and MQTT -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- WiFi permissions for network binding and SSID scan -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
     <!-- Microphone permission for push-to-talk speech recognition -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
