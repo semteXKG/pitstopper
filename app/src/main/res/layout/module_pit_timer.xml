@@ -20,6 +20,20 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
+        android:id="@+id/textWifiWarning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:text=""
+        android:textColor="#F44336"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textEventSession" />
+
+    <TextView
         android:id="@+id/textCurrentTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -31,7 +45,7 @@
         app:layout_constraintBottom_toTopOf="@+id/textCountdown"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textEventSession"
+        app:layout_constraintTop_toBottomOf="@+id/textWifiWarning"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView

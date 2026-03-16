@@ -18,6 +18,7 @@ public class PitTimerModule extends CenterModule {
     private final TextView textCurrentTime;
     private final TextView textCountdown;
     private final TextView textEventSession;
+    private final TextView textWifiWarning;
 
     public PitTimerModule(Context context) {
         super(context);
@@ -25,6 +26,7 @@ public class PitTimerModule extends CenterModule {
         textCurrentTime = findViewById(R.id.textCurrentTime);
         textCountdown = findViewById(R.id.textCountdown);
         textEventSession = findViewById(R.id.textEventSession);
+        textWifiWarning = findViewById(R.id.textWifiWarning);
     }
 
     public void updateTime(String time) {
@@ -38,6 +40,15 @@ public class PitTimerModule extends CenterModule {
     public void setEventSession(String text, boolean visible) {
         textEventSession.setText(text);
         textEventSession.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    public void setWifiWarning(String text) {
+        if (text == null || text.isEmpty()) {
+            textWifiWarning.setVisibility(View.GONE);
+        } else {
+            textWifiWarning.setText(text);
+            textWifiWarning.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

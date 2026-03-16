@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean telemetrySubscribed = false;
     private boolean flashMessageActive = false;
     private ExternalSessionManager externalSessionManager;
+    private at.semmal.pitstopper.mqtt.WifiNetworkManager.StateListener wifiWarningListener;
     
     // SpeedHive Live Timing UI
     private LinearLayout liveTimingPanel;
@@ -343,6 +344,9 @@ public class MainActivity extends AppCompatActivity {
         // Start updating the clock when activity becomes visible
         updateTime(); // Update immediately
         handler.postDelayed(updateTimeRunnable, 1000);
+
+        // WiFi SSID mismatch warning on main screen
+        setupWifiWarning();
     }
 
     @Override
@@ -354,6 +358,13 @@ public class MainActivity extends AppCompatActivity {
         // Stop SpeedHive polling and session checking
         handler.removeCallbacks(speedHivePollingRunnable);
         handler.removeCallbacks(sessionCheckRunnable);
+
+        // Remove WiFi warning listener (re-added in onResume)
+        if (wifiWarningListener != null) {
+            ((PitStopperApplication) getApplication()).getWifiNetworkManager()
+                    .removeStateListener(wifiWarningListener);
+            wifiWarningListener = null;
+        }
 
         // Cancel countdown only if truly going to background, not when launching a flash overlay
         if (!flashMessageActive) {
@@ -475,6 +486,30 @@ public class MainActivity extends AppCompatActivity {
         mqttClientManager.subscribe("fiesta/can/428", this::handleCan428Message);
         telemetrySubscribed = true;
         Log.i(TAG, "Subscribed to telemetry topics");
+    }
+
+    private void setupWifiWarning() {
+        at.semmal.pitstopper.mqtt.WifiNetworkManager wifiMgr =
+                ((PitStopperApplication) getApplication()).getWifiNetworkManager();
+        // Show current state immediately
+        updateWifiWarning(wifiMgr.getState(), wifiMgr);
+        // Listen for changes
+        wifiWarningListener = (state, ssid) -> updateWifiWarning(state, wifiMgr);
+        wifiMgr.addStateListener(wifiWarningListener);
+    }
+
+    private void updateWifiWarning(at.semmal.pitstopper.mqtt.WifiNetworkManager.State state,
+                                   at.semmal.pitstopper.mqtt.WifiNetworkManager wifiMgr) {
+        if (state == at.semmal.pitstopper.mqtt.WifiNetworkManager.State.WRONG_NETWORK) {
+            String actual = wifiMgr.getConnectedSsid();
+            if (actual == null) actual = "?";
+            String expected = wifiMgr.getCurrentSsid();
+            if (expected == null) expected = "?";
+            pitTimerModule.setWifiWarning(
+                    getString(R.string.wifi_status_wrong_network, actual, expected));
+        } else {
+            pitTimerModule.setWifiWarning(null);
+        }
     }
 
     private void handleSensorsMessage(byte[] payload) {
