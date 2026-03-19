@@ -56,6 +56,7 @@ public class WifiNetworkManager {
     private String targetHost = null;
     private int targetPort = 1883;
     private volatile boolean proxyStarted = false;
+    private volatile Network boundNetwork = null;
     private ConnectivityManager.NetworkCallback networkCallback = null;
 
     public WifiNetworkManager(Context context) {
@@ -74,6 +75,9 @@ public class WifiNetworkManager {
      * When bound, connect MQTT to "127.0.0.1" : getProxyPort() instead of the real broker.
      */
     public int getProxyPort() { return proxy.getLocalPort(); }
+
+    /** Returns the bound WiFi Network object, or null if not bound. */
+    public Network getBoundNetwork() { return boundNetwork; }
 
     public void addStateListener(StateListener listener) { listeners.add(listener); }
     public void removeStateListener(StateListener listener) { listeners.remove(listener); }
@@ -115,6 +119,7 @@ public class WifiNetworkManager {
             public void onLost(Network network) {
                 if (currentState == State.BOUND || currentState == State.WRONG_NETWORK) {
                     Log.w(TAG, "WiFi lost");
+                    proxyStarted = false;
                     proxy.stop();
                     connectedSsid = null;
                     mainHandler.post(() -> setState(State.UNAVAILABLE));
@@ -137,6 +142,7 @@ public class WifiNetworkManager {
                                             String brokerHost, int brokerPort) {
         if (proxyStarted) return;
         proxyStarted = true;
+        boundNetwork = network;
 
         String ssid = readSsid(network);
         if (ssid != null) connectedSsid = ssid;
@@ -223,6 +229,7 @@ public class WifiNetworkManager {
 
     private void releaseInternal() {
         proxyStarted = false;
+        boundNetwork = null;
         proxy.stop();
         if (networkCallback != null) {
             try {

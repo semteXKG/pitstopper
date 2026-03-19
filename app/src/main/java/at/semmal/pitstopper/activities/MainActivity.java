@@ -15,6 +15,7 @@ import at.semmal.pitstopper.ui.CountdownModule;
 import at.semmal.pitstopper.ui.CustomModule;
 import at.semmal.pitstopper.ui.PitTimerModule;
 import at.semmal.pitstopper.ui.TelemetryModule;
+import at.semmal.pitstopper.ui.TroubleshootModule;
 import at.semmal.pitstopper.model.ChatMessage;
 import at.semmal.pitstopper.speech.SpeechToTextManager;
 
@@ -73,9 +74,10 @@ public class MainActivity extends AppCompatActivity {
     private ChatModule chatModule;
     private CountdownModule countdownModule;
     private TelemetryModule telemetryModule;
+    private TroubleshootModule troubleshootModule;
     private CenterModule activeModule;
     private CenterModule preCountdownModule; // module to restore after pit stop
-    private final CenterModule[] swipeModules = new CenterModule[3]; // ordered swipe cycle
+    private final CenterModule[] swipeModules = new CenterModule[4]; // ordered swipe cycle
 
     // MQTT
     private MqttClientManager mqttClientManager;
@@ -142,30 +144,37 @@ public class MainActivity extends AppCompatActivity {
         // Initialize preferences early — needed by TelemetryModule
         preferences = new PitWindowPreferences(this);
 
+        // Grab shared MQTT manager — needed before module creation
+        mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
+        externalSessionManager = ((PitStopperApplication) getApplication()).getExternalSessionManager();
+
         // Initialize center modules
         pitTimerModule = new PitTimerModule(this);
         customModule = new CustomModule(this);
         chatModule = new ChatModule(this);
         countdownModule = new CountdownModule(this);
         telemetryModule = new TelemetryModule(this, preferences);
+        troubleshootModule = new TroubleshootModule(this,
+                mqttClientManager,
+                ((PitStopperApplication) getApplication()).getWifiNetworkManager(),
+                preferences);
         centerModuleContainer.addView(pitTimerModule);
         centerModuleContainer.addView(customModule);
         centerModuleContainer.addView(chatModule);
         centerModuleContainer.addView(countdownModule);
         centerModuleContainer.addView(telemetryModule);
+        centerModuleContainer.addView(troubleshootModule);
         swipeModules[0] = pitTimerModule;
         swipeModules[1] = telemetryModule;
         swipeModules[2] = chatModule;
+        swipeModules[3] = troubleshootModule;
         activeModule = pitTimerModule;
         pitTimerModule.onActivate();
         customModule.onDeactivate();
         chatModule.onDeactivate();
         countdownModule.onDeactivate();
         telemetryModule.onDeactivate();
-
-        // Grab shared MQTT manager
-        mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
-        externalSessionManager = ((PitStopperApplication) getApplication()).getExternalSessionManager();
+        troubleshootModule.onDeactivate();
 
         // Subscribe to physical button events once — not in onResume to avoid duplicate subscriptions
         subscribeToButtons();

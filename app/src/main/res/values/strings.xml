@@ -75,4 +75,36 @@
     <string name="wifi_status_unavailable">WiFi not available</string>
     <string name="wifi_status_wrong_network">⚠ Connected to \"%1$s\" — expected \"%2$s\"!</string>
     <string name="wifi_switch_button">Open WiFi Settings</string>
+
+    <!-- Troubleshoot module -->
+    <string name="troubleshoot_title">TROUBLESHOOT</string>
+    <string name="troubleshoot_refresh">Refresh</string>
+    <string name="troubleshoot_wifi_header">WIFI</string>
+    <string name="troubleshoot_mqtt_header">MQTT</string>
+    <string name="troubleshoot_topics_header">MQTT TOPICS</string>
+    <string name="troubleshoot_devices_header">NETWORK DEVICES</string>
+    <string name="troubleshoot_topics_start">Start Scan</string>
+    <string name="troubleshoot_topics_stop">Stop Scan</string>
+    <string name="troubleshoot_devices_start">Scan</string>
+    <string name="troubleshoot_devices_scanning">Scanning…</string>
+    <string name="troubleshoot_wifi_ok">✓ Connected to \"%1$s\" (expected: \"%2$s\")</string>
+    <string name="troubleshoot_wifi_wrong">✗ Connected to \"%1$s\" — expected \"%2$s\"</string>
+    <string name="troubleshoot_wifi_no_wifi">✗ WiFi not connected</string>
+    <string name="troubleshoot_wifi_no_config">⚠ No expected SSID configured</string>
+    <string name="troubleshoot_wifi_connected_no_config">✓ Connected to \"%s\" (no expected SSID set)</string>
+    <string name="troubleshoot_mqtt_connected">✓ Connected to %1$s:%2$d</string>
+    <string name="troubleshoot_mqtt_connecting">⏳ Connecting to %1$s:%2$d…</string>
+    <string name="troubleshoot_mqtt_failing">✗ Failed: %1$s\n   Broker: %2$s:%3$d</string>
+    <string name="troubleshoot_mqtt_disconnected">— MQTT not enabled</string>
+    <string name="troubleshoot_mqtt_tcp_ok">   TCP port reachable ✓</string>
+    <string name="troubleshoot_mqtt_tcp_fail">   TCP port unreachable ✗</string>
+    <string name="troubleshoot_topics_idle">Press Start Scan to discover topics</string>
+    <string name="troubleshoot_topics_scanning">⏳ Scanning… (%d topics found)</string>
+    <string name="troubleshoot_topics_done">%d topics found</string>
+    <string name="troubleshoot_topics_need_mqtt">✗ MQTT must be connected first</string>
+    <string name="troubleshoot_devices_idle">Press Scan to discover devices</string>
+    <string name="troubleshoot_devices_progress">⏳ Scanning… %1$d/%2$d (%3$d found)</string>
+    <string name="troubleshoot_devices_done">✓ Scan complete: %d devices found</string>
+    <string name="troubleshoot_devices_done_ago">✓ %1$d devices found · %2$ds ago</string>
+    <string name="troubleshoot_devices_no_wifi">✗ WiFi not available for subnet scan</string>
 </resources>

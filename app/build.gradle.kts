@@ -33,8 +33,8 @@ android {
         applicationId = "at.semmal.pitstopper"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.4"
+        versionCode = 5
+        versionName = "1.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -74,6 +74,9 @@ dependencies {
 
     // MQTT client
     implementation("com.hivemq:hivemq-mqtt-client:1.3.3")
+
+    // SSH client for network scanner
+    implementation("com.jcraft:jsch:0.1.55")
 
     // QR code generation (encoding only; system camera handles scanning)
     implementation("com.google.zxing:core:3.5.3")
