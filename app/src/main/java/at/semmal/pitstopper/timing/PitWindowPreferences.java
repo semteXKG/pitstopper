@@ -58,6 +58,9 @@ public class PitWindowPreferences {
     private static final String KEY_DEVICE_LABEL = "device_label";
 
     // Telemetry alarm thresholds
+    private static final String KEY_RPM_WARN = "rpm_warn";
+    private static final String KEY_RPM_CRIT = "rpm_crit";
+    private static final String KEY_RPM_ALARM = "rpm_alarm_enabled";
     private static final String KEY_COOLANT_WARN = "coolant_warn";
     private static final String KEY_COOLANT_CRIT = "coolant_crit";
     private static final String KEY_COOLANT_ALARM = "coolant_alarm_enabled";
@@ -71,6 +74,8 @@ public class PitWindowPreferences {
     private static final String KEY_BATTERY_CRIT = "battery_crit";
     private static final String KEY_BATTERY_ALARM = "battery_alarm_enabled";
 
+    private static final int DEFAULT_RPM_WARN = 5500;
+    private static final int DEFAULT_RPM_CRIT = 6500;
     private static final int DEFAULT_COOLANT_WARN = 100;
     private static final int DEFAULT_COOLANT_CRIT = 110;
     private static final int DEFAULT_OIL_TEMP_WARN = 110;
@@ -318,6 +323,10 @@ public class PitWindowPreferences {
 
     // --- Telemetry alarm thresholds ---
 
+    public int getRpmWarn()           { return prefs.getInt(KEY_RPM_WARN, DEFAULT_RPM_WARN); }
+    public int getRpmCrit()           { return prefs.getInt(KEY_RPM_CRIT, DEFAULT_RPM_CRIT); }
+    public boolean isRpmAlarm()       { return prefs.getBoolean(KEY_RPM_ALARM, DEFAULT_ALARM_ENABLED); }
+
     public int getCoolantWarn()       { return prefs.getInt(KEY_COOLANT_WARN, DEFAULT_COOLANT_WARN); }
     public int getCoolantCrit()       { return prefs.getInt(KEY_COOLANT_CRIT, DEFAULT_COOLANT_CRIT); }
     public boolean isCoolantAlarm()   { return prefs.getBoolean(KEY_COOLANT_ALARM, DEFAULT_ALARM_ENABLED); }
@@ -335,11 +344,15 @@ public class PitWindowPreferences {
     public boolean isBatteryAlarm()   { return prefs.getBoolean(KEY_BATTERY_ALARM, DEFAULT_ALARM_ENABLED); }
 
     public void saveTelemetryAlarms(
+            int rpmWarn, int rpmCrit, boolean rpmAlarm,
             int coolantWarn, int coolantCrit, boolean coolantAlarm,
             int oilTempWarn, int oilTempCrit, boolean oilTempAlarm,
             float oilPresWarn, float oilPresCrit, boolean oilPresAlarm,
             float batteryWarn, float batteryCrit, boolean batteryAlarm) {
         prefs.edit()
+            .putInt(KEY_RPM_WARN, rpmWarn)
+            .putInt(KEY_RPM_CRIT, rpmCrit)
+            .putBoolean(KEY_RPM_ALARM, rpmAlarm)
             .putInt(KEY_COOLANT_WARN, coolantWarn)
             .putInt(KEY_COOLANT_CRIT, coolantCrit)
             .putBoolean(KEY_COOLANT_ALARM, coolantAlarm)

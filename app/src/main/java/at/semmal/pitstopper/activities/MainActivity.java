@@ -7,6 +7,7 @@ import at.semmal.pitstopper.livetiming.SpeedHiveManager;
 import at.semmal.pitstopper.model.LiveTimingData;
 import at.semmal.pitstopper.mqtt.MqttClientManager;
 import at.semmal.pitstopper.mqtt.ExternalSessionManager;
+import at.semmal.pitstopper.mqtt.TelemetryAlertTracker;
 import at.semmal.pitstopper.timing.PitWindowAlertManager;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 import at.semmal.pitstopper.ui.CenterModule;
@@ -87,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean telemetrySubscribed = false;
     private boolean flashMessageActive = false;
     private ExternalSessionManager externalSessionManager;
+    private TelemetryAlertTracker telemetryAlertTracker;
     private at.semmal.pitstopper.mqtt.WifiNetworkManager.StateListener wifiWarningListener;
     
     // SpeedHive Live Timing UI
@@ -147,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
         // Grab shared MQTT manager — needed before module creation
         mqttClientManager = ((PitStopperApplication) getApplication()).getMqttClientManager();
         externalSessionManager = ((PitStopperApplication) getApplication()).getExternalSessionManager();
+        telemetryAlertTracker = ((PitStopperApplication) getApplication()).getTelemetryAlertTracker();
 
         // Initialize center modules
         pitTimerModule = new PitTimerModule(this);
@@ -348,6 +351,7 @@ public class MainActivity extends AppCompatActivity {
         externalSessionManager.setEventListener((from, text, isNotification, isAlert) -> {
             chatModule.addMessage(new ChatMessage(from, text, System.currentTimeMillis(), isNotification, isAlert));
             showSessionEventBanner(from, text);
+            telemetryAlertTracker.publishChatEvent(from, text, isNotification, isAlert);
         });
 
         // Start updating the clock when activity becomes visible
@@ -527,7 +531,11 @@ public class MainActivity extends AppCompatActivity {
             int oilTemp = json.optInt("oil_temp", Integer.MIN_VALUE);
             double oilPres = json.optDouble("oil_pres", Double.NaN);
             if (oilTemp != Integer.MIN_VALUE && !Double.isNaN(oilPres)) {
-                runOnUiThread(() -> telemetryModule.updateSensors(oilTemp, (float) oilPres));
+                runOnUiThread(() -> {
+                    telemetryModule.updateSensors(oilTemp, (float) oilPres);
+                    telemetryAlertTracker.updateOilTemp(oilTemp);
+                    telemetryAlertTracker.updateOilPres((float) oilPres);
+                });
             }
         } catch (JSONException e) {
             Log.w(TAG, "Malformed sensors payload");
@@ -541,10 +549,13 @@ public class MainActivity extends AppCompatActivity {
             double speedKmh = json.optDouble("speed_kmh", Double.NaN);
             double throttlePct = json.optDouble("throttle_pct", Double.NaN);
             if (rpm != Integer.MIN_VALUE) {
-                runOnUiThread(() -> telemetryModule.updateCan201(
-                        rpm,
-                        Double.isNaN(speedKmh) ? 0f : (float) speedKmh,
-                        Double.isNaN(throttlePct) ? 0f : (float) throttlePct));
+                runOnUiThread(() -> {
+                    telemetryModule.updateCan201(
+                            rpm,
+                            Double.isNaN(speedKmh) ? 0f : (float) speedKmh,
+                            Double.isNaN(throttlePct) ? 0f : (float) throttlePct);
+                    telemetryAlertTracker.updateRpm(rpm);
+                });
             }
         } catch (JSONException e) {
             Log.w(TAG, "Malformed CAN 201 payload");
@@ -569,8 +580,10 @@ public class MainActivity extends AppCompatActivity {
             int coolantC = json.optInt("coolant_c", Integer.MIN_VALUE);
             String brake = json.optString("brake_pedal", "");
             if (coolantC != Integer.MIN_VALUE) {
-                runOnUiThread(() -> telemetryModule.updateCan420(
-                        coolantC, brake.isEmpty() ? "off" : brake));
+                runOnUiThread(() -> {
+                    telemetryModule.updateCan420(coolantC, brake.isEmpty() ? "off" : brake);
+                    telemetryAlertTracker.updateCoolant(coolantC);
+                });
             }
         } catch (JSONException e) {
             Log.w(TAG, "Malformed CAN 420 payload");
@@ -582,7 +595,10 @@ public class MainActivity extends AppCompatActivity {
             JSONObject json = new JSONObject(new String(payload));
             double batteryV = json.optDouble("battery_v", Double.NaN);
             if (!Double.isNaN(batteryV)) {
-                runOnUiThread(() -> telemetryModule.updateBattery((float) batteryV));
+                runOnUiThread(() -> {
+                    telemetryModule.updateBattery((float) batteryV);
+                    telemetryAlertTracker.updateBattery((float) batteryV);
+                });
             }
         } catch (JSONException e) {
             Log.w(TAG, "Malformed CAN 428 payload");

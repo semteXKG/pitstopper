@@ -3,6 +3,7 @@ package at.semmal.pitstopper.activities;
 import at.semmal.pitstopper.mqtt.MqttClientManager;
 import at.semmal.pitstopper.mqtt.ExternalSessionManager;
 import at.semmal.pitstopper.mqtt.LocalTcpProxy;
+import at.semmal.pitstopper.mqtt.TelemetryAlertTracker;
 import at.semmal.pitstopper.mqtt.WifiNetworkManager;
 import at.semmal.pitstopper.timing.PitWindowPreferences;
 
@@ -20,6 +21,7 @@ public class PitStopperApplication extends Application {
     private MqttClientManager mqttClientManager;
     private ExternalSessionManager externalSessionManager;
     private WifiNetworkManager wifiNetworkManager;
+    private TelemetryAlertTracker telemetryAlertTracker;
     private LocalTcpProxy cellularProxy;
     private ConnectivityManager.NetworkCallback cellularCallback;
     private volatile Network cellularNetwork;
@@ -32,6 +34,7 @@ public class PitStopperApplication extends Application {
         wifiNetworkManager = new WifiNetworkManager(this);
 
         PitWindowPreferences preferences = new PitWindowPreferences(this);
+        telemetryAlertTracker = new TelemetryAlertTracker(mqttClientManager, preferences);
         String preferredSsid = preferences.getPreferredWifiSsid();
 
         if (preferredSsid != null) {
@@ -185,6 +188,10 @@ public class PitStopperApplication extends Application {
 
     public WifiNetworkManager getWifiNetworkManager() {
         return wifiNetworkManager;
+    }
+
+    public TelemetryAlertTracker getTelemetryAlertTracker() {
+        return telemetryAlertTracker;
     }
 
     /** Returns the cellular Network for routing HTTP calls, or null if unavailable. */

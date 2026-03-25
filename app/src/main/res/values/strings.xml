@@ -58,6 +58,7 @@
 
     <!-- Telemetry alarm strings -->
     <string name="telemetry_alarms_section">Telemetry Alarms</string>
+    <string name="telemetry_rpm">RPM</string>
     <string name="telemetry_coolant">Coolant Temp (°C)</string>
     <string name="telemetry_oil_temp">Oil Temp (°C)</string>
     <string name="telemetry_oil_pres">Oil Pressure (bar)</string>

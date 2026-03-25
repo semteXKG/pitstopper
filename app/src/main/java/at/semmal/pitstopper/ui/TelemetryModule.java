@@ -27,6 +27,9 @@ import at.semmal.pitstopper.timing.PitWindowPreferences;
 public class TelemetryModule extends CenterModule {
 
     // Warning / critical thresholds (loaded from preferences)
+    private int rpmWarn;
+    private int rpmCrit;
+    private boolean rpmAlarm;
     private int coolantWarn;
     private int coolantCrit;
     private boolean coolantAlarm;
@@ -70,6 +73,9 @@ public class TelemetryModule extends CenterModule {
         LayoutInflater.from(context).inflate(R.layout.module_telemetry, this, true);
 
         // Load thresholds from preferences
+        rpmWarn = preferences.getRpmWarn();
+        rpmCrit = preferences.getRpmCrit();
+        rpmAlarm = preferences.isRpmAlarm();
         coolantWarn = preferences.getCoolantWarn();
         coolantCrit = preferences.getCoolantCrit();
         coolantAlarm = preferences.isCoolantAlarm();
@@ -111,6 +117,8 @@ public class TelemetryModule extends CenterModule {
         data.setCan201(rpm, speedKmh, throttlePct);
 
         textRpmValue.setText(String.valueOf(rpm));
+        textRpmValue.setTextColor(rpmAlarm
+                ? colorForHighValue(rpm, rpmWarn, rpmCrit) : colorNormal);
         textSpeedValue.setText(String.valueOf(Math.round(speedKmh)));
 
         // Throttle bar fill

@@ -23,18 +23,95 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Coolant row -->
+    <!-- RPM row -->
     <TextView
-        android:id="@+id/labelCoolant"
+        android:id="@+id/labelRpm"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="48dp"
-        android:text="@string/telemetry_coolant"
+        android:text="@string/telemetry_rpm"
         android:textColor="@color/text_primary"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textTitle" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/telemetry_warn"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/editRpmWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editRpmWarn" />
+
+    <EditText
+        android:id="@+id/editRpmWarn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/white"
+        android:inputType="number"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideWarn"
+        app:layout_constraintTop_toBottomOf="@id/labelRpm" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/telemetry_crit"
+        android:textColor="@color/telemetry_label"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@id/editRpmWarn"
+        app:layout_constraintBaseline_toBaselineOf="@id/editRpmWarn" />
+
+    <EditText
+        android:id="@+id/editRpmCrit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/white"
+        android:inputType="number"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:importantForAutofill="no"
+        app:layout_constraintWidth_percent="0.18"
+        app:layout_constraintStart_toStartOf="@id/guideCrit"
+        app:layout_constraintTop_toBottomOf="@id/labelRpm" />
+
+    <CheckBox
+        android:id="@+id/checkRpmAlarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/telemetry_alarm_enabled"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:buttonTint="@color/text_primary"
+        android:checked="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBaseline_toBaselineOf="@id/editRpmWarn" />
+
+    <!-- Coolant row -->
+    <TextView
+        android:id="@+id/labelCoolant"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/telemetry_coolant"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/editRpmWarn" />
 
     <TextView
         android:layout_width="0dp"
