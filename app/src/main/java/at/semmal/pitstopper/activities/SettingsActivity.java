@@ -7,19 +7,28 @@ import at.semmal.pitstopper.timing.PitWindowPreferences;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import org.json.JSONObject;
+
 import java.util.Locale;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    private static final String TAG = "SettingsActivity";
+    private static final String TOPIC_BRIGHTNESS = "fiesta/brightness";
+
     private PitWindowPreferences preferences;
     private TextView summaryRace, summarySpeedHive, summaryTelemetry, summaryMqtt;
+    private SeekBar seekBrightness;
+    private TextView textBrightnessValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +52,7 @@ public class SettingsActivity extends AppCompatActivity {
         findViewById(R.id.rowMqtt).setOnClickListener(v ->
                 startActivity(new Intent(this, SettingsMqttActivity.class)));
 
+        setupBrightnessSlider();
         refreshSummaries();
     }
 
@@ -96,6 +106,43 @@ public class SettingsActivity extends AppCompatActivity {
         String localState = mqttClient.getState().name().toLowerCase(Locale.ROOT);
         String extState = extMqtt.getState().name().toLowerCase(Locale.ROOT);
         summaryMqtt.setText(String.format("Local: %s • Public: %s", localState, extState));
+    }
+
+    private void setupBrightnessSlider() {
+        seekBrightness = findViewById(R.id.seekBrightness);
+        textBrightnessValue = findViewById(R.id.textBrightnessValue);
+
+        int current = preferences.getBrightness();
+        seekBrightness.setProgress(current);
+        textBrightnessValue.setText(String.valueOf(current));
+
+        seekBrightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                textBrightnessValue.setText(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int brightness = seekBar.getProgress();
+                preferences.saveBrightness(brightness);
+                publishBrightness(brightness);
+            }
+        });
+    }
+
+    private void publishBrightness(int brightness) {
+        MqttClientManager mqtt = ((PitStopperApplication) getApplication()).getMqttClientManager();
+        try {
+            JSONObject json = new JSONObject();
+            json.put("brightness", brightness);
+            mqtt.publishRetained(TOPIC_BRIGHTNESS, json.toString().getBytes());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to publish brightness: " + e.getMessage());
+        }
     }
 
     private void hideSystemUI() {

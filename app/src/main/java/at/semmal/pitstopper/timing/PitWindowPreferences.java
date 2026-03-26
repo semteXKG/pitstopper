@@ -57,6 +57,10 @@ public class PitWindowPreferences {
     private static final String KEY_SESSION_ID = "external_session_id";
     private static final String KEY_DEVICE_LABEL = "device_label";
 
+    // Brightness (0-100)
+    private static final String KEY_BRIGHTNESS = "brightness";
+    private static final int DEFAULT_BRIGHTNESS = 100;
+
     // Telemetry alarm thresholds
     private static final String KEY_RPM_WARN = "rpm_warn";
     private static final String KEY_RPM_CRIT = "rpm_crit";
@@ -319,6 +323,16 @@ public class PitWindowPreferences {
 
     public void saveDeviceLabel(String label) {
         prefs.edit().putString(KEY_DEVICE_LABEL, label).apply();
+    }
+
+    // --- Brightness ---
+
+    public int getBrightness() {
+        return prefs.getInt(KEY_BRIGHTNESS, DEFAULT_BRIGHTNESS);
+    }
+
+    public void saveBrightness(int brightness) {
+        prefs.edit().putInt(KEY_BRIGHTNESS, brightness).apply();
     }
 
     // --- Telemetry alarm thresholds ---

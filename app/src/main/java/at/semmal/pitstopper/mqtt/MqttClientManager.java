@@ -198,6 +198,28 @@ public class MqttClientManager {
     }
 
     /**
+     * Publish a retained message to a topic. Reconnecting devices will
+     * receive the last retained value immediately.
+     */
+    public void publishRetained(String topic, byte[] payload) {
+        if (client == null || currentState != State.CONNECTED) {
+            Log.w(TAG, "Cannot publish: not connected");
+            return;
+        }
+        client.publishWith()
+                .topic(topic)
+                .qos(MqttQos.AT_MOST_ONCE)
+                .retain(true)
+                .payload(payload)
+                .send()
+                .whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        Log.e(TAG, "Publish retained failed: " + throwable.getMessage());
+                    }
+                });
+    }
+
+    /**
      * Subscribe to a topic with a message callback. Call only when CONNECTED.
      */
     public void subscribe(String topic, java.util.function.Consumer<byte[]> onMessage) {

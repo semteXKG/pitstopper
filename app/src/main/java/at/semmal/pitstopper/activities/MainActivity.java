@@ -81,11 +81,14 @@ public class MainActivity extends AppCompatActivity {
     private final CenterModule[] swipeModules = new CenterModule[4]; // ordered swipe cycle
 
     // MQTT
+    private static final String TOPIC_BRIGHTNESS = "fiesta/brightness";
     private MqttClientManager mqttClientManager;
     private MqttClientManager.StateListener mqttButtonsListener;
     private MqttClientManager.StateListener mqttTelemetryListener;
+    private MqttClientManager.StateListener mqttBrightnessListener;
     private boolean buttonsSubscribed = false;
     private boolean telemetrySubscribed = false;
+    private boolean brightnessPublished = false;
     private boolean flashMessageActive = false;
     private ExternalSessionManager externalSessionManager;
     private TelemetryAlertTracker telemetryAlertTracker;
@@ -182,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
         // Subscribe to physical button events once — not in onResume to avoid duplicate subscriptions
         subscribeToButtons();
         subscribeToTelemetry();
+        publishBrightnessOnConnect();
 
         // Handle deep link join (pitstopper://join?session=...)
         handleSessionDeepLink(getIntent());
@@ -407,6 +411,10 @@ public class MainActivity extends AppCompatActivity {
             mqttClientManager.removeStateListener(mqttTelemetryListener);
             mqttTelemetryListener = null;
         }
+        if (mqttBrightnessListener != null) {
+            mqttClientManager.removeStateListener(mqttBrightnessListener);
+            mqttBrightnessListener = null;
+        }
         if (speechToTextManager != null) {
             speechToTextManager.destroy();
         }
@@ -499,6 +507,35 @@ public class MainActivity extends AppCompatActivity {
         mqttClientManager.subscribe("fiesta/can/428", this::handleCan428Message);
         telemetrySubscribed = true;
         Log.i(TAG, "Subscribed to telemetry topics");
+    }
+
+    private void publishBrightnessOnConnect() {
+        mqttBrightnessListener = (state, error) -> {
+            if (state == MqttClientManager.State.CONNECTED) {
+                if (!brightnessPublished) {
+                    doPublishBrightness();
+                }
+            } else if (state == MqttClientManager.State.DISCONNECTED
+                    || state == MqttClientManager.State.CONNECTING) {
+                brightnessPublished = false;
+            }
+        };
+        mqttClientManager.addStateListener(mqttBrightnessListener);
+        if (mqttClientManager.isConnected() && !brightnessPublished) {
+            doPublishBrightness();
+        }
+    }
+
+    private void doPublishBrightness() {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("brightness", preferences.getBrightness());
+            mqttClientManager.publishRetained(TOPIC_BRIGHTNESS, json.toString().getBytes());
+            brightnessPublished = true;
+            Log.i(TAG, "Published brightness: " + preferences.getBrightness());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to publish brightness: " + e.getMessage());
+        }
     }
 
     private void setupWifiWarning() {

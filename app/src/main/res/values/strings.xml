@@ -43,6 +43,9 @@
     <!-- External (public) MQTT broker strings -->
     <string name="ext_mqtt_section_title">Public MQTT Broker</string>
 
+    <!-- Brightness -->
+    <string name="settings_brightness">Brightness</string>
+
     <!-- Settings hub strings -->
     <string name="settings_hub_race">Race</string>
     <string name="settings_hub_speedhive">SpeedHive</string>
