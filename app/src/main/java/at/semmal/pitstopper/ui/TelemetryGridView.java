@@ -13,24 +13,12 @@ import at.semmal.pitstopper.R;
 
 /**
  * Custom drawn grid overlay for the telemetry dashboard.
- * Draws thin lines separating RPM / Speed+Controls / Health gauge cells.
- *
- * Grid layout:
- * ┌───────────────────────────────────┐
- * │              RPM                  │
- * ├────────────────┬──────────────────┤
- * │     SPEED      │   THR / BRK     │
- * ├─────────┬──────┴───┬──────┬──────┤
- * │  COOL   │  OIL T   │ OIL P│ BATT │
- * └─────────┴──────────┴──────┴──────┘
+ * Adapts its grid lines to the active TelemetryLayout.
  */
 public class TelemetryGridView extends View {
 
-    private static final float GUIDE_MIDDLE = 0.42f;
-    private static final float GUIDE_BOTTOM = 0.72f;
-    private static final float MID_VERTICAL = 0.50f;
-
     private final Paint gridPaint;
+    private TelemetryLayout layout = TelemetryLayout.LAYOUT_1_2_4;
 
     public TelemetryGridView(Context context) {
         this(context, null);
@@ -42,11 +30,15 @@ public class TelemetryGridView extends View {
 
     public TelemetryGridView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-
         gridPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         gridPaint.setColor(ContextCompat.getColor(context, R.color.telemetry_grid));
         gridPaint.setStrokeWidth(dpToPx(1.5f));
         gridPaint.setStyle(Paint.Style.STROKE);
+    }
+
+    public void setTelemetryLayout(TelemetryLayout layout) {
+        this.layout = layout;
+        invalidate();
     }
 
     @Override
@@ -55,32 +47,51 @@ public class TelemetryGridView extends View {
 
         int w = getWidth();
         int h = getHeight();
-        int pad = getPaddingLeft();
-        float left = pad;
+        float left  = getPaddingLeft();
         float right = w - getPaddingRight();
-        float top = getPaddingTop();
+        float top   = getPaddingTop();
         float bottom = h - getPaddingBottom();
+        float totalH = bottom - top;
+        float totalW = right - left;
 
-        float yMiddle = top + (bottom - top) * GUIDE_MIDDLE;
-        float yBottom = top + (bottom - top) * GUIDE_BOTTOM;
-
-        // Outer border — top and bottom lines only (no left/right edges)
+        // Outer top + bottom lines
         canvas.drawLine(left, top, right, top, gridPaint);
         canvas.drawLine(left, bottom, right, bottom, gridPaint);
 
-        // Horizontal dividers
-        canvas.drawLine(left, yMiddle, right, yMiddle, gridPaint);
-        canvas.drawLine(left, yBottom, right, yBottom, gridPaint);
+        if (layout == TelemetryLayout.LAYOUT_2_4) {
+            // ─────────── 2 / 4 ───────────
+            // One horizontal divider at 50%
+            float yMid = top + totalH * 0.5f;
+            canvas.drawLine(left, yMid, right, yMid, gridPaint);
 
-        // Middle zone: vertical split between speed and throttle/brake
-        float xMidSplit = left + (right - left) * MID_VERTICAL;
-        canvas.drawLine(xMidSplit, yMiddle, xMidSplit, yBottom, gridPaint);
+            // Top tier: 2 equal columns
+            float xHalf = left + totalW * 0.5f;
+            canvas.drawLine(xHalf, top, xHalf, yMid, gridPaint);
 
-        // Bottom zone: 4 equal columns
-        float colW = (right - left) / 4f;
-        for (int i = 1; i < 4; i++) {
-            float x = left + colW * i;
-            canvas.drawLine(x, yBottom, x, bottom, gridPaint);
+            // Bottom tier: 4 equal columns
+            float colW = totalW / 4f;
+            for (int i = 1; i < 4; i++) {
+                float x = left + colW * i;
+                canvas.drawLine(x, yMid, x, bottom, gridPaint);
+            }
+        } else {
+            // ─────────── 1 / 2 / 4 ───────────
+            float yMiddle = top + totalH * 0.42f;
+            float yBottom = top + totalH * 0.72f;
+
+            canvas.drawLine(left, yMiddle, right, yMiddle, gridPaint);
+            canvas.drawLine(left, yBottom, right, yBottom, gridPaint);
+
+            // Middle tier: vertical split at 50%
+            float xMidSplit = left + totalW * 0.5f;
+            canvas.drawLine(xMidSplit, yMiddle, xMidSplit, yBottom, gridPaint);
+
+            // Bottom tier: 4 equal columns
+            float colW = totalW / 4f;
+            for (int i = 1; i < 4; i++) {
+                float x = left + colW * i;
+                canvas.drawLine(x, yBottom, x, bottom, gridPaint);
+            }
         }
     }
 

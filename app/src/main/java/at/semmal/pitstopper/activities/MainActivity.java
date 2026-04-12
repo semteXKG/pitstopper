@@ -364,6 +364,9 @@ public class MainActivity extends AppCompatActivity {
 
         // WiFi SSID mismatch warning on main screen
         setupWifiWarning();
+
+        // Rebuild telemetry layout in case sensor/layout settings changed
+        telemetryModule.buildLayout();
     }
 
     @Override

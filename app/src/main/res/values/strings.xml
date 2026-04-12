@@ -69,6 +69,10 @@
     <string name="telemetry_warn">Warn</string>
     <string name="telemetry_crit">Crit</string>
     <string name="telemetry_alarm_enabled">Alarm</string>
+    <string name="telemetry_layout">Layout</string>
+    <string name="telemetry_slots">Sensor Assignment</string>
+    <string name="telemetry_speed">Speed (km/h)</string>
+    <string name="telemetry_throttle_brake">Throttle + Brake</string>
 
     <!-- WiFi Binding section -->
     <string name="settings_wifi_title">Expected WLAN</string>

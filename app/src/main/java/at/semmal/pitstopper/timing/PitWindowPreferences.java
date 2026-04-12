@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import java.util.Locale;
 
+import at.semmal.pitstopper.ui.TelemetryLayout;
+import at.semmal.pitstopper.ui.TelemetrySensor;
+
 public class PitWindowPreferences {
 
     private static final String PREFS_NAME = "PitWindowPrefs";
@@ -77,6 +80,17 @@ public class PitWindowPreferences {
     private static final String KEY_BATTERY_WARN = "battery_warn";
     private static final String KEY_BATTERY_CRIT = "battery_crit";
     private static final String KEY_BATTERY_ALARM = "battery_alarm_enabled";
+
+    private static final String KEY_TELEMETRY_LAYOUT = "telemetry_layout";
+    private static final String KEY_SLOT_PREFIX = "telemetry_slot_";
+
+    // Default slot assignments per layout (sensor names matching TelemetrySensor enum)
+    private static final String[] DEFAULT_SLOTS_1_2_4 = {
+        "RPM", "SPEED", "THROTTLE_BRAKE", "COOLANT", "OIL_TEMP", "OIL_PRES", "BATTERY"
+    };
+    private static final String[] DEFAULT_SLOTS_2_4 = {
+        "RPM", "THROTTLE_BRAKE", "COOLANT", "OIL_TEMP", "OIL_PRES", "BATTERY"
+    };
 
     private static final int DEFAULT_RPM_WARN = 5500;
     private static final int DEFAULT_RPM_CRIT = 6500;
@@ -356,6 +370,29 @@ public class PitWindowPreferences {
     public float getBatteryWarn()     { return prefs.getFloat(KEY_BATTERY_WARN, DEFAULT_BATTERY_WARN); }
     public float getBatteryCrit()     { return prefs.getFloat(KEY_BATTERY_CRIT, DEFAULT_BATTERY_CRIT); }
     public boolean isBatteryAlarm()   { return prefs.getBoolean(KEY_BATTERY_ALARM, DEFAULT_ALARM_ENABLED); }
+
+    public TelemetryLayout getTelemetryLayout() {
+        return TelemetryLayout.fromKey(prefs.getString(KEY_TELEMETRY_LAYOUT, TelemetryLayout.LAYOUT_1_2_4.key));
+    }
+
+    public TelemetrySensor[] getSlotSensors(TelemetryLayout layout) {
+        String[] defaults = layout == TelemetryLayout.LAYOUT_2_4 ? DEFAULT_SLOTS_2_4 : DEFAULT_SLOTS_1_2_4;
+        TelemetrySensor[] result = new TelemetrySensor[layout.slotCount];
+        for (int i = 0; i < result.length; i++) {
+            String key = KEY_SLOT_PREFIX + layout.key + "_" + i;
+            result[i] = TelemetrySensor.fromString(prefs.getString(key, defaults[i]));
+        }
+        return result;
+    }
+
+    public void saveLayoutConfig(TelemetryLayout layout, TelemetrySensor[] sensors) {
+        SharedPreferences.Editor editor = prefs.edit()
+            .putString(KEY_TELEMETRY_LAYOUT, layout.key);
+        for (int i = 0; i < sensors.length; i++) {
+            editor.putString(KEY_SLOT_PREFIX + layout.key + "_" + i, sensors[i].name());
+        }
+        editor.apply();
+    }
 
     public void saveTelemetryAlarms(
             int rpmWarn, int rpmCrit, boolean rpmAlarm,

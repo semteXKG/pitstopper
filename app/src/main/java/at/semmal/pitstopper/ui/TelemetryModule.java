@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
@@ -18,29 +19,23 @@ import at.semmal.pitstopper.timing.PitWindowPreferences;
 /**
  * Center module displaying a racing-style telemetry dashboard.
  * <p>
- * Layout: RPM (top, largest) → Speed + Throttle bar + Brake indicator (middle)
- * → Engine health grid: Coolant, Oil Temp, Oil Pressure, Battery (bottom).
+ * Layout is configurable: tiers (1/2/4 or 2/4) and sensor assignment per slot
+ * are loaded from preferences each time the module activates.
  * <p>
  * Values are color-coded: white (normal), yellow (warning), red (critical).
- * Thresholds and alarm enable/disable are loaded from preferences.
  */
 public class TelemetryModule extends CenterModule {
 
-    // Warning / critical thresholds (loaded from preferences)
-    private int rpmWarn;
-    private int rpmCrit;
+    // Warning / critical thresholds
+    private int rpmWarn, rpmCrit;
     private boolean rpmAlarm;
-    private int coolantWarn;
-    private int coolantCrit;
+    private int coolantWarn, coolantCrit;
     private boolean coolantAlarm;
-    private int oilTempWarn;
-    private int oilTempCrit;
+    private int oilTempWarn, oilTempCrit;
     private boolean oilTempAlarm;
-    private float oilPresWarn;
-    private float oilPresCrit;
+    private float oilPresWarn, oilPresCrit;
     private boolean oilPresAlarm;
-    private float batteryWarn;
-    private float batteryCrit;
+    private float batteryWarn, batteryCrit;
     private boolean batteryAlarm;
 
     private final int colorNormal;
@@ -50,29 +45,32 @@ public class TelemetryModule extends CenterModule {
     private final int colorBrakePressed;
     private final int colorDim;
 
-    // Tier 1
-    private final TextView textRpmValue;
+    // Tier containers and grid (from XML)
+    private TelemetryGridView telemetryGrid;
+    private LinearLayout tier1Container;
+    private LinearLayout tier2Container;
+    private LinearLayout tier3Container;
 
-    // Tier 2
-    private final TextView textSpeedValue;
-    private final View throttleBarFill;
-    private final FrameLayout throttleBarContainer;
-    private final TextView textThrottleValue;
-    private final View brakeIndicator;
-
-    // Tier 3
-    private final TextView textCoolantValue;
-    private final TextView textOilTempValue;
-    private final TextView textOilPresValue;
-    private final TextView textBatteryValue;
+    // Per-sensor view refs — null when sensor is not in the current layout
+    private TextView rpmValueView;
+    private TextView speedValueView;
+    private View throttleBarFill;
+    private FrameLayout throttleBarContainer;
+    private TextView throttleValueView;
+    private View brakeIndicatorView;
+    private TextView coolantValueView;
+    private TextView oilTempValueView;
+    private TextView oilPresValueView;
+    private TextView batteryValueView;
 
     private final TelemetryData data = new TelemetryData();
+    private final PitWindowPreferences preferences;
 
     public TelemetryModule(Context context, PitWindowPreferences preferences) {
         super(context);
+        this.preferences = preferences;
         LayoutInflater.from(context).inflate(R.layout.module_telemetry, this, true);
 
-        // Load thresholds from preferences
         rpmWarn = preferences.getRpmWarn();
         rpmCrit = preferences.getRpmCrit();
         rpmAlarm = preferences.isRpmAlarm();
@@ -96,16 +94,10 @@ public class TelemetryModule extends CenterModule {
         colorBrakePressed = ContextCompat.getColor(context, R.color.brake_pressed);
         colorDim = 0xFF333333;
 
-        textRpmValue = findViewById(R.id.textRpmValue);
-        textSpeedValue = findViewById(R.id.textSpeedValue);
-        throttleBarFill = findViewById(R.id.throttleBarFill);
-        throttleBarContainer = findViewById(R.id.throttleBarContainer);
-        textThrottleValue = findViewById(R.id.textThrottleValue);
-        brakeIndicator = findViewById(R.id.brakeIndicator);
-        textCoolantValue = findViewById(R.id.textCoolantValue);
-        textOilTempValue = findViewById(R.id.textOilTempValue);
-        textOilPresValue = findViewById(R.id.textOilPresValue);
-        textBatteryValue = findViewById(R.id.textBatteryValue);
+        telemetryGrid  = findViewById(R.id.telemetryGrid);
+        tier1Container = findViewById(R.id.tier1Container);
+        tier2Container = findViewById(R.id.tier2Container);
+        tier3Container = findViewById(R.id.tier3Container);
     }
 
     public TelemetryData getData() {
@@ -116,67 +108,217 @@ public class TelemetryModule extends CenterModule {
     public void updateCan201(int rpm, float speedKmh, float throttlePct) {
         data.setCan201(rpm, speedKmh, throttlePct);
 
-        textRpmValue.setText(String.valueOf(rpm));
-        textRpmValue.setTextColor(rpmAlarm
-                ? colorForHighValue(rpm, rpmWarn, rpmCrit) : colorNormal);
-        textSpeedValue.setText(String.valueOf(Math.round(speedKmh)));
-
-        // Throttle bar fill
-        float pct = Math.max(0, Math.min(100, throttlePct));
-        textThrottleValue.setText(String.format(Locale.US, "%.0f%%", pct));
-        ViewGroup.LayoutParams lp = throttleBarFill.getLayoutParams();
-        int containerWidth = throttleBarContainer.getWidth();
-        if (containerWidth > 0) {
-            lp.width = Math.round(containerWidth * pct / 100f);
-            throttleBarFill.setLayoutParams(lp);
+        if (rpmValueView != null) {
+            rpmValueView.setText(String.valueOf(rpm));
+            rpmValueView.setTextColor(rpmAlarm
+                    ? colorForHighValue(rpm, rpmWarn, rpmCrit) : colorNormal);
+        }
+        if (speedValueView != null) {
+            speedValueView.setText(String.valueOf(Math.round(speedKmh)));
+        }
+        if (throttleValueView != null && throttleBarFill != null) {
+            float pct = Math.max(0, Math.min(100, throttlePct));
+            throttleValueView.setText(String.format(Locale.US, "%.0f%%", pct));
+            ViewGroup.LayoutParams lp = throttleBarFill.getLayoutParams();
+            int containerWidth = throttleBarContainer.getWidth();
+            if (containerWidth > 0) {
+                lp.width = Math.round(containerWidth * pct / 100f);
+                throttleBarFill.setLayoutParams(lp);
+            }
         }
     }
 
     /** Update brake pedal state from CAN 0x360. Call on main thread. */
     public void updateBrake(String brakePedal) {
         data.setBrakePedal(brakePedal);
-        switch (brakePedal) {
-            case "pressed":
-                brakeIndicator.setBackgroundColor(colorBrakePressed);
-                break;
-            case "touch":
-                brakeIndicator.setBackgroundColor(colorBrakeTouch);
-                break;
-            default:
-                brakeIndicator.setBackgroundColor(colorDim);
-                break;
+        if (brakeIndicatorView != null) {
+            switch (brakePedal) {
+                case "pressed":
+                    brakeIndicatorView.setBackgroundColor(colorBrakePressed);
+                    break;
+                case "touch":
+                    brakeIndicatorView.setBackgroundColor(colorBrakeTouch);
+                    break;
+                default:
+                    brakeIndicatorView.setBackgroundColor(colorDim);
+                    break;
+            }
         }
     }
 
     /** Update coolant + brake from CAN 0x420. Call on main thread. */
     public void updateCan420(int coolantC, String brakePedal) {
         data.setCan420(coolantC, brakePedal);
-        textCoolantValue.setText(String.format(Locale.US, "%d°", coolantC));
-        textCoolantValue.setTextColor(coolantAlarm
-                ? colorForHighValue(coolantC, coolantWarn, coolantCrit) : colorNormal);
+        if (coolantValueView != null) {
+            coolantValueView.setText(String.format(Locale.US, "%d°", coolantC));
+            coolantValueView.setTextColor(coolantAlarm
+                    ? colorForHighValue(coolantC, coolantWarn, coolantCrit) : colorNormal);
+        }
         updateBrake(brakePedal);
     }
 
     /** Update oil temp + oil pressure from fiesta/sensors. Call on main thread. */
     public void updateSensors(int oilTemp, float oilPres) {
         data.setSensors(oilTemp, oilPres);
-        textOilTempValue.setText(String.format(Locale.US, "%d°", oilTemp));
-        textOilTempValue.setTextColor(oilTempAlarm
-                ? colorForHighValue(oilTemp, oilTempWarn, oilTempCrit) : colorNormal);
-        textOilPresValue.setText(String.format(Locale.US, "%.1f", oilPres));
-        textOilPresValue.setTextColor(oilPresAlarm
-                ? colorForLowValue(oilPres, oilPresWarn, oilPresCrit) : colorNormal);
+        if (oilTempValueView != null) {
+            oilTempValueView.setText(String.format(Locale.US, "%d°", oilTemp));
+            oilTempValueView.setTextColor(oilTempAlarm
+                    ? colorForHighValue(oilTemp, oilTempWarn, oilTempCrit) : colorNormal);
+        }
+        if (oilPresValueView != null) {
+            oilPresValueView.setText(String.format(Locale.US, "%.1f", oilPres));
+            oilPresValueView.setTextColor(oilPresAlarm
+                    ? colorForLowValue(oilPres, oilPresWarn, oilPresCrit) : colorNormal);
+        }
     }
 
     /** Update battery voltage from CAN 0x428. Call on main thread. */
     public void updateBattery(float batteryV) {
         data.setBatteryV(batteryV);
-        textBatteryValue.setText(String.format(Locale.US, "%.1fV", batteryV));
-        textBatteryValue.setTextColor(batteryAlarm
-                ? colorForLowValue(batteryV, batteryWarn, batteryCrit) : colorNormal);
+        if (batteryValueView != null) {
+            batteryValueView.setText(String.format(Locale.US, "%.1fV", batteryV));
+            batteryValueView.setTextColor(batteryAlarm
+                    ? colorForLowValue(batteryV, batteryWarn, batteryCrit) : colorNormal);
+        }
     }
 
-    /** Color for values where HIGH is bad (temp). */
+    @Override
+    public void onActivate() {
+        setVisibility(View.VISIBLE);
+        buildLayout();
+    }
+
+    @Override
+    public void onDeactivate() {
+        animate().cancel();
+        setTranslationY(0);
+        setVisibility(View.GONE);
+    }
+
+    // ── Layout construction ────────────────────────────────────────────────────
+
+    public void buildLayout() {
+        tier1Container.removeAllViews();
+        tier2Container.removeAllViews();
+        tier3Container.removeAllViews();
+        clearSensorRefs();
+
+        TelemetryLayout layout = preferences.getTelemetryLayout();
+        TelemetrySensor[] sensors = preferences.getSlotSensors(layout);
+
+        telemetryGrid.setTelemetryLayout(layout);
+
+        if (layout == TelemetryLayout.LAYOUT_1_2_4) {
+            setTierWeights(42, 30, 28);
+            tier2Container.setVisibility(View.VISIBLE);
+            populateTier(tier1Container, sensors, 0, 1);
+            populateTier(tier2Container, sensors, 1, 3);
+            populateTier(tier3Container, sensors, 3, 7);
+        } else { // LAYOUT_2_4
+            setTierWeights(50, 0, 50);
+            tier2Container.setVisibility(View.GONE);
+            populateTier(tier1Container, sensors, 0, 2);
+            populateTier(tier3Container, sensors, 2, 6);
+        }
+    }
+
+    private void setTierWeights(int w1, int w2, int w3) {
+        setWeight(tier1Container, w1);
+        setWeight(tier2Container, w2);
+        setWeight(tier3Container, w3);
+    }
+
+    private void setWeight(View v, int weight) {
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) v.getLayoutParams();
+        params.weight = weight;
+        v.setLayoutParams(params);
+    }
+
+    private void populateTier(LinearLayout container, TelemetrySensor[] sensors, int from, int to) {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        for (int i = from; i < to; i++) {
+            View slot = inflateSlot(inflater, sensors[i]);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+            slot.setLayoutParams(params);
+            container.addView(slot);
+        }
+    }
+
+    private View inflateSlot(LayoutInflater inflater, TelemetrySensor sensor) {
+        switch (sensor) {
+            case RPM: {
+                View v = inflater.inflate(R.layout.slot_numeric, null);
+                ((TextView) v.findViewById(R.id.slotLabel)).setText("RPM");
+                rpmValueView = v.findViewById(R.id.slotValue);
+                if (data.hasRpm()) rpmValueView.setText(String.valueOf(data.getRpm()));
+                return v;
+            }
+            case SPEED: {
+                View v = inflater.inflate(R.layout.slot_numeric, null);
+                ((TextView) v.findViewById(R.id.slotLabel)).setText("km/h");
+                speedValueView = v.findViewById(R.id.slotValue);
+                if (data.hasSpeed()) speedValueView.setText(String.valueOf(Math.round(data.getSpeedKmh())));
+                return v;
+            }
+            case COOLANT: {
+                View v = inflater.inflate(R.layout.slot_numeric, null);
+                ((TextView) v.findViewById(R.id.slotLabel)).setText("COOL");
+                coolantValueView = v.findViewById(R.id.slotValue);
+                if (data.hasCoolant()) coolantValueView.setText(String.format(Locale.US, "%d°", data.getCoolantC()));
+                return v;
+            }
+            case OIL_TEMP: {
+                View v = inflater.inflate(R.layout.slot_numeric, null);
+                ((TextView) v.findViewById(R.id.slotLabel)).setText("OIL T");
+                oilTempValueView = v.findViewById(R.id.slotValue);
+                if (data.hasOilTemp()) oilTempValueView.setText(String.format(Locale.US, "%d°", data.getOilTemp()));
+                return v;
+            }
+            case OIL_PRES: {
+                View v = inflater.inflate(R.layout.slot_numeric, null);
+                ((TextView) v.findViewById(R.id.slotLabel)).setText("OIL P");
+                oilPresValueView = v.findViewById(R.id.slotValue);
+                if (data.hasOilPres()) oilPresValueView.setText(String.format(Locale.US, "%.1f", data.getOilPres()));
+                return v;
+            }
+            case BATTERY: {
+                View v = inflater.inflate(R.layout.slot_numeric, null);
+                ((TextView) v.findViewById(R.id.slotLabel)).setText("BATT");
+                batteryValueView = v.findViewById(R.id.slotValue);
+                if (data.hasBattery()) batteryValueView.setText(String.format(Locale.US, "%.1fV", data.getBatteryV()));
+                return v;
+            }
+            case THROTTLE_BRAKE: {
+                View v = inflater.inflate(R.layout.slot_throttle_brake, null);
+                throttleBarFill = v.findViewById(R.id.throttleBarFill);
+                throttleBarContainer = v.findViewById(R.id.throttleBarContainer);
+                throttleValueView = v.findViewById(R.id.slotThrottleValue);
+                brakeIndicatorView = v.findViewById(R.id.brakeIndicator);
+                return v;
+            }
+            case EMPTY:
+            default:
+                return new View(getContext());
+        }
+    }
+
+    private void clearSensorRefs() {
+        rpmValueView = null;
+        speedValueView = null;
+        throttleBarFill = null;
+        throttleBarContainer = null;
+        throttleValueView = null;
+        brakeIndicatorView = null;
+        coolantValueView = null;
+        oilTempValueView = null;
+        oilPresValueView = null;
+        batteryValueView = null;
+    }
+
+    // ── Color helpers ──────────────────────────────────────────────────────────
+
+    /** Color for values where HIGH is bad (temp, RPM). */
     private int colorForHighValue(float value, float warn, float crit) {
         if (value >= crit) return colorCritical;
         if (value >= warn) return colorWarning;
@@ -188,17 +330,5 @@ public class TelemetryModule extends CenterModule {
         if (value <= crit) return colorCritical;
         if (value <= warn) return colorWarning;
         return colorNormal;
-    }
-
-    @Override
-    public void onActivate() {
-        setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onDeactivate() {
-        animate().cancel();
-        setTranslationY(0);
-        setVisibility(View.GONE);
     }
 }
