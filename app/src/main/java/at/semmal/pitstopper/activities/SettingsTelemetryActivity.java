@@ -49,13 +49,15 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
 
     // Short label shown inside each tile
     private static final String[] SENSOR_TILE_LABELS = {
-        "—", "RPM", "Speed", "THR+BRK", "Coolant", "Oil T", "Oil P", "Battery"
+        "—", "RPM", "Speed", "THR+BRK", "Coolant", "Oil T", "Oil P", "Battery",
+        "T:FL", "T:FR", "T:RL", "T:RR"
     };
 
     // Full name shown in the picker dialog
     private static final String[] SENSOR_DIALOG_LABELS = {
         "— Empty —", "RPM", "Speed (km/h)", "Throttle + Brake",
-        "Coolant (°C)", "Oil Temp (°C)", "Oil Pressure (bar)", "Battery (V)"
+        "Coolant (°C)", "Oil Temp (°C)", "Oil Pressure (bar)", "Battery (V)",
+        "Tyre FL (bar + °C)", "Tyre FR (bar + °C)", "Tyre RL (bar + °C)", "Tyre RR (bar + °C)"
     };
 
     @Override

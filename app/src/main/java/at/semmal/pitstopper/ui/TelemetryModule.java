@@ -52,6 +52,10 @@ public class TelemetryModule extends CenterModule {
     private LinearLayout tier3Container;
 
     // Per-sensor view refs — null when sensor is not in the current layout
+    private TextView tyrePresViewFL, tyreTempViewFL;
+    private TextView tyrePresViewFR, tyreTempViewFR;
+    private TextView tyrePresViewRL, tyreTempViewRL;
+    private TextView tyrePresViewRR, tyreTempViewRR;
     private TextView rpmValueView;
     private TextView speedValueView;
     private View throttleBarFill;
@@ -182,6 +186,28 @@ public class TelemetryModule extends CenterModule {
         }
     }
 
+    /** Update tyre pressure + temperature from fiesta/tpms/{pos}. Call on main thread. */
+    public void updateTpms(String pos, Float presBar, int tempC, boolean alarm) {
+        data.setTyre(pos, presBar, tempC, alarm);
+        TextView presView, tempView;
+        switch (pos) {
+            case "fl": presView = tyrePresViewFL; tempView = tyreTempViewFL; break;
+            case "fr": presView = tyrePresViewFR; tempView = tyreTempViewFR; break;
+            case "rl": presView = tyrePresViewRL; tempView = tyreTempViewRL; break;
+            case "rr": presView = tyrePresViewRR; tempView = tyreTempViewRR; break;
+            default:   return;
+        }
+        if (presView != null) {
+            presView.setText(presBar != null
+                    ? String.format(Locale.US, "%.2f", presBar) : "--");
+            presView.setTextColor(alarm ? colorCritical : colorNormal);
+        }
+        if (tempView != null) {
+            tempView.setText(String.format(Locale.US, "%d°", tempC));
+            tempView.setTextColor(alarm ? colorCritical : colorNormal);
+        }
+    }
+
     @Override
     public void onActivate() {
         setVisibility(View.VISIBLE);
@@ -297,10 +323,44 @@ public class TelemetryModule extends CenterModule {
                 brakeIndicatorView = v.findViewById(R.id.brakeIndicator);
                 return v;
             }
+            case TYRE_FL:
+                return inflateTyreSlot(inflater, "FL", "fl",
+                        data.hasTyreFL(), data.getTyprePresFL(), data.getTyreTempFL(), data.getTyreAlarmFL());
+            case TYRE_FR:
+                return inflateTyreSlot(inflater, "FR", "fr",
+                        data.hasTyreFR(), data.getTyprePresFR(), data.getTyreTempFR(), data.getTyreAlarmFR());
+            case TYRE_RL:
+                return inflateTyreSlot(inflater, "RL", "rl",
+                        data.hasTyreRL(), data.getTyprePresRL(), data.getTyreTempRL(), data.getTyreAlarmRL());
+            case TYRE_RR:
+                return inflateTyreSlot(inflater, "RR", "rr",
+                        data.hasTyreRR(), data.getTyprePresRR(), data.getTyreTempRR(), data.getTyreAlarmRR());
             case EMPTY:
             default:
                 return new View(getContext());
         }
+    }
+
+    private View inflateTyreSlot(LayoutInflater inflater, String label, String posKey,
+            boolean hasData, Float presBar, int tempC, boolean alarm) {
+        View v = inflater.inflate(R.layout.slot_tyre, null);
+        ((TextView) v.findViewById(R.id.slotTyrePos)).setText(label);
+        TextView presView = v.findViewById(R.id.slotTyrePres);
+        TextView tempView = v.findViewById(R.id.slotTyreTemp);
+        switch (posKey) {
+            case "fl": tyrePresViewFL = presView; tyreTempViewFL = tempView; break;
+            case "fr": tyrePresViewFR = presView; tyreTempViewFR = tempView; break;
+            case "rl": tyrePresViewRL = presView; tyreTempViewRL = tempView; break;
+            case "rr": tyrePresViewRR = presView; tyreTempViewRR = tempView; break;
+        }
+        if (hasData) {
+            presView.setText(presBar != null
+                    ? String.format(Locale.US, "%.2f", presBar) : "--");
+            presView.setTextColor(alarm ? colorCritical : colorNormal);
+            tempView.setText(String.format(Locale.US, "%d°", tempC));
+            tempView.setTextColor(alarm ? colorCritical : colorNormal);
+        }
+        return v;
     }
 
     private void clearSensorRefs() {
@@ -314,6 +374,10 @@ public class TelemetryModule extends CenterModule {
         oilTempValueView = null;
         oilPresValueView = null;
         batteryValueView = null;
+        tyrePresViewFL = null; tyreTempViewFL = null;
+        tyrePresViewFR = null; tyreTempViewFR = null;
+        tyrePresViewRL = null; tyreTempViewRL = null;
+        tyrePresViewRR = null; tyreTempViewRR = null;
     }
 
     // ── Color helpers ──────────────────────────────────────────────────────────

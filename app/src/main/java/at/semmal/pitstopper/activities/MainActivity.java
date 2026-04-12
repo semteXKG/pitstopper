@@ -508,6 +508,10 @@ public class MainActivity extends AppCompatActivity {
         mqttClientManager.subscribe("fiesta/can/360", this::handleCan360Message);
         mqttClientManager.subscribe("fiesta/can/420", this::handleCan420Message);
         mqttClientManager.subscribe("fiesta/can/428", this::handleCan428Message);
+        mqttClientManager.subscribe("fiesta/tpms/fl", bytes -> handleTpmsMessage("fl", bytes));
+        mqttClientManager.subscribe("fiesta/tpms/fr", bytes -> handleTpmsMessage("fr", bytes));
+        mqttClientManager.subscribe("fiesta/tpms/rl", bytes -> handleTpmsMessage("rl", bytes));
+        mqttClientManager.subscribe("fiesta/tpms/rr", bytes -> handleTpmsMessage("rr", bytes));
         telemetrySubscribed = true;
         Log.i(TAG, "Subscribed to telemetry topics");
     }
@@ -642,6 +646,21 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (JSONException e) {
             Log.w(TAG, "Malformed CAN 428 payload");
+        }
+    }
+
+    private void handleTpmsMessage(String pos, byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            int tempC = json.optInt("temp_c", Integer.MIN_VALUE);
+            if (tempC == Integer.MIN_VALUE) return;
+            double presRaw = json.optDouble("pres_bar", Double.NaN);
+            Float presBar = (Double.isNaN(presRaw) || json.isNull("pres_bar")) ? null : (float) presRaw;
+            boolean alarm = json.optBoolean("alarm", false);
+            final Float finalPres = presBar;
+            runOnUiThread(() -> telemetryModule.updateTpms(pos, finalPres, tempC, alarm));
+        } catch (JSONException e) {
+            Log.w(TAG, "Malformed TPMS payload for " + pos);
         }
     }
 

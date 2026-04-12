@@ -26,6 +26,12 @@ public class TelemetryData {
     // CAN 0x428 (10 Hz)
     private float batteryV = Float.NaN;
 
+    // fiesta/tpms/{fl|fr|rl|rr}
+    private Float   tyrePresFL = null, tyrePresFR = null, tyrePresRL = null, tyrePresRR = null;
+    private int     tyreTempFL = Integer.MIN_VALUE, tyreTempFR = Integer.MIN_VALUE,
+                    tyreTempRL = Integer.MIN_VALUE, tyreTempRR = Integer.MIN_VALUE;
+    private boolean tyreAlarmFL, tyreAlarmFR, tyreAlarmRL, tyreAlarmRR;
+
     // --- CAN 0x201 ---
 
     public int getRpm()              { return rpm; }
@@ -72,6 +78,37 @@ public class TelemetryData {
     public void setBatteryV(float batteryV) {
         this.batteryV = batteryV;
     }
+
+    // --- fiesta/tpms ---
+
+    public void setTyre(String pos, Float presBar, int tempC, boolean alarm) {
+        switch (pos) {
+            case "fl": tyrePresFL = presBar; tyreTempFL = tempC; tyreAlarmFL = alarm; break;
+            case "fr": tyrePresFR = presBar; tyreTempFR = tempC; tyreAlarmFR = alarm; break;
+            case "rl": tyrePresRL = presBar; tyreTempRL = tempC; tyreAlarmRL = alarm; break;
+            case "rr": tyrePresRR = presBar; tyreTempRR = tempC; tyreAlarmRR = alarm; break;
+        }
+    }
+
+    public Float   getTyprePresFL() { return tyrePresFL; }
+    public int     getTyreTempFL()  { return tyreTempFL; }
+    public boolean getTyreAlarmFL() { return tyreAlarmFL; }
+    public boolean hasTyreFL()      { return tyreTempFL != Integer.MIN_VALUE; }
+
+    public Float   getTyprePresFR() { return tyrePresFR; }
+    public int     getTyreTempFR()  { return tyreTempFR; }
+    public boolean getTyreAlarmFR() { return tyreAlarmFR; }
+    public boolean hasTyreFR()      { return tyreTempFR != Integer.MIN_VALUE; }
+
+    public Float   getTyprePresRL() { return tyrePresRL; }
+    public int     getTyreTempRL()  { return tyreTempRL; }
+    public boolean getTyreAlarmRL() { return tyreAlarmRL; }
+    public boolean hasTyreRL()      { return tyreTempRL != Integer.MIN_VALUE; }
+
+    public Float   getTyprePresRR() { return tyrePresRR; }
+    public int     getTyreTempRR()  { return tyreTempRR; }
+    public boolean getTyreAlarmRR() { return tyreAlarmRR; }
+    public boolean hasTyreRR()      { return tyreTempRR != Integer.MIN_VALUE; }
 
     // --- Helpers ---
 

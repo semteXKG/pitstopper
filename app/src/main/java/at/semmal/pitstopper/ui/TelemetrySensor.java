@@ -1,7 +1,8 @@
 package at.semmal.pitstopper.ui;
 
 public enum TelemetrySensor {
-    EMPTY, RPM, SPEED, THROTTLE_BRAKE, COOLANT, OIL_TEMP, OIL_PRES, BATTERY;
+    EMPTY, RPM, SPEED, THROTTLE_BRAKE, COOLANT, OIL_TEMP, OIL_PRES, BATTERY,
+    TYRE_FL, TYRE_FR, TYRE_RL, TYRE_RR;
 
     public static TelemetrySensor fromString(String s) {
         try {
