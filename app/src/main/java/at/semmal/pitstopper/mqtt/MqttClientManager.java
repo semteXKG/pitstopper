@@ -148,6 +148,9 @@ public class MqttClientManager {
                 .send()
                 .whenComplete((ack, throwable) -> {
                     if (throwable != null) {
+                        // Ignore late-arriving failures if the user already disconnected.
+                        // DNS timeouts can take 15+ seconds, arriving long after disconnect().
+                        if (disconnecting) return;
                         // Only set FAILING if HiveMQ is not already scheduling a reconnect.
                         // The disconnectedListener fires separately with isReconnect()=true
                         // and will set state to CONNECTING — so we only reach here on a
@@ -171,7 +174,9 @@ public class MqttClientManager {
         disconnecting = true;
         client.disconnect()
                 .whenComplete((v, throwable) -> {
-                    disconnecting = false;
+                    // Do NOT reset disconnecting here — the disconnected listener may fire
+                    // after this future completes and must still see disconnecting=true to
+                    // suppress the auto-reconnect. connectInternal() resets it on next connect.
                     client = null;
                     setState(State.DISCONNECTED, null);
                 });
