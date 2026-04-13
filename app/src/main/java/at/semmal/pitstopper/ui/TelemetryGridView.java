@@ -54,10 +54,6 @@ public class TelemetryGridView extends View {
         float totalH = bottom - top;
         float totalW = right - left;
 
-        // Outer top + bottom lines
-        canvas.drawLine(left, top, right, top, gridPaint);
-        canvas.drawLine(left, bottom, right, bottom, gridPaint);
-
         if (layout == TelemetryLayout.LAYOUT_2_4) {
             // ─────────── 2 / 4 ───────────
             // One horizontal divider at 50%
