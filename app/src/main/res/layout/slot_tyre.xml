@@ -5,17 +5,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Tyre position label at top (FL / FR / RL / RR) -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/slotGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.88" />
+
+    <!-- Tyre position label on right side, rotated vertical -->
     <TextView
         android:id="@+id/slotTyrePos"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
         android:gravity="center"
+        android:rotation="90"
         android:textColor="@color/telemetry_label"
-        android:textSize="36sp"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="@id/slotGuideline"
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Temperature at bottom -->
@@ -29,10 +38,10 @@
         android:textColor="@color/telemetry_label"
         android:textSize="40sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/slotGuideline"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Pressure fills the middle (auto-size) -->
+    <!-- Pressure fills the remaining space (auto-size) -->
     <TextView
         android:id="@+id/slotTyrePres"
         android:layout_width="0dp"
@@ -50,8 +59,8 @@
         app:autoSizeStepGranularity="2sp"
         app:autoSizeTextType="uniform"
         app:layout_constraintBottom_toTopOf="@id/slotTyreTemp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/slotGuideline"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/slotTyrePos" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
