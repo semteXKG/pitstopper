@@ -45,6 +45,11 @@ public class TelemetryModule extends CenterModule {
     private final int colorBrakePressed;
     private final int colorDim;
 
+    private final int thermalCold;
+    private final int thermalWarm;
+    private final int thermalHot;
+    private final int thermalNoDetect;
+
     // Tier containers and grid (from XML)
     private TelemetryGridView telemetryGrid;
     private LinearLayout tier1Container;
@@ -56,6 +61,10 @@ public class TelemetryModule extends CenterModule {
     private TextView tyrePresViewFR, tyreTempViewFR;
     private TextView tyrePresViewRL, tyreTempViewRL;
     private TextView tyrePresViewRR, tyreTempViewRR;
+    private TextView thermalMaxViewFL, thermalZonesViewFL;
+    private TextView thermalMaxViewFR, thermalZonesViewFR;
+    private TextView thermalMaxViewRL, thermalZonesViewRL;
+    private TextView thermalMaxViewRR, thermalZonesViewRR;
     private TextView rpmValueView;
     private TextView speedValueView;
     private View throttleBarFill;
@@ -97,6 +106,11 @@ public class TelemetryModule extends CenterModule {
         colorBrakeTouch = ContextCompat.getColor(context, R.color.brake_touch);
         colorBrakePressed = ContextCompat.getColor(context, R.color.brake_pressed);
         colorDim = 0xFF333333;
+
+        thermalCold = ContextCompat.getColor(context, R.color.thermal_cold);
+        thermalWarm = ContextCompat.getColor(context, R.color.thermal_warm);
+        thermalHot = ContextCompat.getColor(context, R.color.thermal_hot);
+        thermalNoDetect = ContextCompat.getColor(context, R.color.thermal_no_detect);
 
         telemetryGrid  = findViewById(R.id.telemetryGrid);
         tier1Container = findViewById(R.id.tier1Container);
@@ -206,6 +220,49 @@ public class TelemetryModule extends CenterModule {
             tempView.setText(String.format(Locale.US, "%d°", tempC));
             tempView.setTextColor(alarm ? colorCritical : colorNormal);
         }
+    }
+
+    /** Update thermal zone temperatures from fiesta/tire-temp/{pos}. Call on main thread. */
+    public void updateThermal(String pos, float ta, float outside, float center,
+                              float inside, boolean detected, int pixels) {
+        data.setThermal(pos, ta, outside, center, inside, detected, pixels);
+        TextView maxView, zonesView;
+        switch (pos) {
+            case "FL": maxView = thermalMaxViewFL; zonesView = thermalZonesViewFL; break;
+            case "FR": maxView = thermalMaxViewFR; zonesView = thermalZonesViewFR; break;
+            case "RL": maxView = thermalMaxViewRL; zonesView = thermalZonesViewRL; break;
+            case "RR": maxView = thermalMaxViewRR; zonesView = thermalZonesViewRR; break;
+            default:   return;
+        }
+        int color = thermalColor(detected, outside, center, inside);
+        if (maxView != null) {
+            if (detected) {
+                float maxZone = Math.max(Math.max(outside, center), inside);
+                maxView.setText(String.format(Locale.US, "%.1f°", maxZone));
+            } else {
+                maxView.setText("?");
+            }
+            maxView.setTextColor(color);
+        }
+        if (zonesView != null) {
+            if (detected && hasAnyZone(outside, center, inside)) {
+                boolean isLeft = "FL".equals(pos) || "RL".equals(pos);
+                if (isLeft) {
+                    zonesView.setText(String.format(Locale.US, "O:%.0f° C:%.0f° I:%.0f°",
+                            outside, center, inside));
+                } else {
+                    zonesView.setText(String.format(Locale.US, "I:%.0f° C:%.0f° O:%.0f°",
+                            inside, center, outside));
+                }
+            } else {
+                zonesView.setText("--");
+            }
+            zonesView.setTextColor(color);
+        }
+    }
+
+    private boolean hasAnyZone(float outside, float center, float inside) {
+        return !Float.isNaN(outside) || !Float.isNaN(center) || !Float.isNaN(inside);
     }
 
     @Override
@@ -335,6 +392,22 @@ public class TelemetryModule extends CenterModule {
             case TYRE_RR:
                 return inflateTyreSlot(inflater, "RR", "rr",
                         data.hasTyreRR(), data.getTyprePresRR(), data.getTyreTempRR(), data.getTyreAlarmRR());
+            case THERMAL_FL:
+                return inflateThermalSlot(inflater, "FL",
+                        data.hasThermalFL(), data.getThermalDetectedFL(),
+                        data.getThermalOutsideFL(), data.getThermalCenterFL(), data.getThermalInsideFL());
+            case THERMAL_FR:
+                return inflateThermalSlot(inflater, "FR",
+                        data.hasThermalFR(), data.getThermalDetectedFR(),
+                        data.getThermalOutsideFR(), data.getThermalCenterFR(), data.getThermalInsideFR());
+            case THERMAL_RL:
+                return inflateThermalSlot(inflater, "RL",
+                        data.hasThermalRL(), data.getThermalDetectedRL(),
+                        data.getThermalOutsideRL(), data.getThermalCenterRL(), data.getThermalInsideRL());
+            case THERMAL_RR:
+                return inflateThermalSlot(inflater, "RR",
+                        data.hasThermalRR(), data.getThermalDetectedRR(),
+                        data.getThermalOutsideRR(), data.getThermalCenterRR(), data.getThermalInsideRR());
             case EMPTY:
             default:
                 return new View(getContext());
@@ -363,6 +436,44 @@ public class TelemetryModule extends CenterModule {
         return v;
     }
 
+    private View inflateThermalSlot(LayoutInflater inflater, String posKey,
+            boolean hasData, boolean detected, float outside, float center, float inside) {
+        View v = inflater.inflate(R.layout.slot_thermal, null);
+        ((TextView) v.findViewById(R.id.slotThermalPos)).setText(posKey);
+        TextView maxView = v.findViewById(R.id.slotThermalMax);
+        TextView zonesView = v.findViewById(R.id.slotThermalZones);
+        switch (posKey) {
+            case "FL": thermalMaxViewFL = maxView; thermalZonesViewFL = zonesView; break;
+            case "FR": thermalMaxViewFR = maxView; thermalZonesViewFR = zonesView; break;
+            case "RL": thermalMaxViewRL = maxView; thermalZonesViewRL = zonesView; break;
+            case "RR": thermalMaxViewRR = maxView; thermalZonesViewRR = zonesView; break;
+        }
+        if (hasData) {
+            int color = thermalColor(detected, outside, center, inside);
+            if (detected) {
+                float maxZone = Math.max(Math.max(outside, center), inside);
+                maxView.setText(String.format(Locale.US, "%.1f°", maxZone));
+            } else {
+                maxView.setText("?");
+            }
+            maxView.setTextColor(color);
+            if (detected && hasAnyZone(outside, center, inside)) {
+                boolean isLeft = "FL".equals(posKey) || "RL".equals(posKey);
+                if (isLeft) {
+                    zonesView.setText(String.format(Locale.US, "O:%.0f° C:%.0f° I:%.0f°",
+                            outside, center, inside));
+                } else {
+                    zonesView.setText(String.format(Locale.US, "I:%.0f° C:%.0f° O:%.0f°",
+                            inside, center, outside));
+                }
+            } else {
+                zonesView.setText("--");
+            }
+            zonesView.setTextColor(color);
+        }
+        return v;
+    }
+
     private void clearSensorRefs() {
         rpmValueView = null;
         speedValueView = null;
@@ -378,6 +489,10 @@ public class TelemetryModule extends CenterModule {
         tyrePresViewFR = null; tyreTempViewFR = null;
         tyrePresViewRL = null; tyreTempViewRL = null;
         tyrePresViewRR = null; tyreTempViewRR = null;
+        thermalMaxViewFL = null; thermalZonesViewFL = null;
+        thermalMaxViewFR = null; thermalZonesViewFR = null;
+        thermalMaxViewRL = null; thermalZonesViewRL = null;
+        thermalMaxViewRR = null; thermalZonesViewRR = null;
     }
 
     // ── Color helpers ──────────────────────────────────────────────────────────
@@ -394,5 +509,15 @@ public class TelemetryModule extends CenterModule {
         if (value <= crit) return colorCritical;
         if (value <= warn) return colorWarning;
         return colorNormal;
+    }
+
+    /** Color for thermal zone temperatures based on max zone value. */
+    private int thermalColor(boolean detected, float outside, float center, float inside) {
+        if (!detected) return thermalNoDetect;
+        float maxZone = Math.max(Math.max(outside, center), inside);
+        if (Float.isNaN(maxZone)) return thermalNoDetect;
+        if (maxZone >= 75f) return thermalHot;
+        if (maxZone >= 50f) return thermalWarm;
+        return thermalCold;
     }
 }
