@@ -512,6 +512,10 @@ public class MainActivity extends AppCompatActivity {
         mqttClientManager.subscribe("fiesta/tpms/fr", bytes -> handleTpmsMessage("fr", bytes));
         mqttClientManager.subscribe("fiesta/tpms/rl", bytes -> handleTpmsMessage("rl", bytes));
         mqttClientManager.subscribe("fiesta/tpms/rr", bytes -> handleTpmsMessage("rr", bytes));
+        mqttClientManager.subscribe("fiesta/tire-temp/FL", bytes -> handleThermalMessage("FL", bytes));
+        mqttClientManager.subscribe("fiesta/tire-temp/FR", bytes -> handleThermalMessage("FR", bytes));
+        mqttClientManager.subscribe("fiesta/tire-temp/RL", bytes -> handleThermalMessage("RL", bytes));
+        mqttClientManager.subscribe("fiesta/tire-temp/RR", bytes -> handleThermalMessage("RR", bytes));
         telemetrySubscribed = true;
         Log.i(TAG, "Subscribed to telemetry topics");
     }
@@ -661,6 +665,29 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> telemetryModule.updateTpms(pos, finalPres, tempC, alarm));
         } catch (JSONException e) {
             Log.w(TAG, "Malformed TPMS payload for " + pos);
+        }
+    }
+
+    private void handleThermalMessage(String pos, byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            float ta = (float) json.optDouble("ta", Double.NaN);
+            boolean detected = json.optBoolean("detected", false);
+            int pixels = json.optInt("pixels", 0);
+            final float outside, center, inside;
+            if (detected) {
+                outside = (float) json.optDouble("outside", Double.NaN);
+                center  = (float) json.optDouble("center", Double.NaN);
+                inside  = (float) json.optDouble("inside", Double.NaN);
+            } else {
+                outside = Float.NaN;
+                center  = Float.NaN;
+                inside  = Float.NaN;
+            }
+            runOnUiThread(() ->
+                    telemetryModule.updateThermal(pos, ta, outside, center, inside, detected, pixels));
+        } catch (JSONException e) {
+            Log.w(TAG, "Malformed thermal payload for " + pos);
         }
     }
 
