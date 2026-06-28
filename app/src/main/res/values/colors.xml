@@ -26,4 +26,10 @@
     <!-- SpeedHive gap trend colors -->
     <color name="gap_positive">#FF00CC00</color>
     <color name="gap_negative">#FFCC0000</color>
+
+    <!-- Thermal zone temperature colors -->
+    <color name="thermal_cold">#FF3B82F6</color>
+    <color name="thermal_warm">#FF22C55E</color>
+    <color name="thermal_hot">#FFEF4444</color>
+    <color name="thermal_no_detect">#FF6B7280</color>
 </resources>
