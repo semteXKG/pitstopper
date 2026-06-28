@@ -5,17 +5,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Position label at top (FL / FR / RL / RR) -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/slotGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.88" />
+
+    <!-- Position label on right side, rotated vertical -->
     <TextView
         android:id="@+id/slotThermalPos"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
         android:gravity="center"
+        android:rotation="90"
         android:textColor="@color/telemetry_label"
-        android:textSize="36sp"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="@id/slotGuideline"
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Zone temperatures small at bottom -->
@@ -29,10 +38,10 @@
         android:textColor="@color/telemetry_label"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/slotGuideline"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Max zone temperature fills the middle (auto-size) -->
+    <!-- Max zone temperature fills the remaining space (auto-size) -->
     <TextView
         android:id="@+id/slotThermalMax"
         android:layout_width="0dp"
@@ -50,8 +59,8 @@
         app:autoSizeStepGranularity="2sp"
         app:autoSizeTextType="uniform"
         app:layout_constraintBottom_toTopOf="@id/slotThermalZones"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/slotGuideline"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/slotThermalPos" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
