@@ -250,6 +250,23 @@ public class MqttClientManager {
                 });
     }
 
+    /**
+     * Unsubscribe from a topic. Safe to call when not connected (no-op).
+     */
+    public void unsubscribe(String topic) {
+        if (client == null || currentState != State.CONNECTED) {
+            return;
+        }
+        client.unsubscribeWith()
+                .topicFilter(topic)
+                .send()
+                .whenComplete((voidResult, throwable) -> {
+                    if (throwable != null) {
+                        Log.e(TAG, "Unsubscribe failed for " + topic + ": " + throwable.getMessage());
+                    }
+                });
+    }
+
     private void setState(State newState, String error) {
         currentState = newState;
         lastError = error;
