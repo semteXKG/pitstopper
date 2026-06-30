@@ -34,6 +34,7 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
     private CheckBox checkOilPresAlarm;
     private EditText editBatteryWarn, editBatteryCrit;
     private CheckBox checkBatteryAlarm;
+    private EditText editThermalMin, editThermalMax;
 
     private RadioButton radioLayout124, radioLayout24, radioLayout222;
     private LinearLayout layoutPreview;
@@ -86,6 +87,8 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
         editBatteryWarn = findViewById(R.id.editBatteryWarn);
         editBatteryCrit = findViewById(R.id.editBatteryCrit);
         checkBatteryAlarm = findViewById(R.id.checkBatteryAlarm);
+        editThermalMin = findViewById(R.id.editThermalMin);
+        editThermalMax = findViewById(R.id.editThermalMax);
 
         radioLayout124 = findViewById(R.id.radioLayout124);
         radioLayout24 = findViewById(R.id.radioLayout24);
@@ -126,6 +129,8 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
         editBatteryWarn.setText(String.valueOf(preferences.getBatteryWarn()));
         editBatteryCrit.setText(String.valueOf(preferences.getBatteryCrit()));
         checkBatteryAlarm.setChecked(preferences.isBatteryAlarm());
+        editThermalMin.setText(String.valueOf(preferences.getThermalViewerMin()));
+        editThermalMax.setText(String.valueOf(preferences.getThermalViewerMax()));
 
         TelemetryLayout layout = preferences.getTelemetryLayout();
         if (layout == TelemetryLayout.LAYOUT_2_4) {
@@ -219,6 +224,13 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
             float oilPresCrit = Float.parseFloat(editOilPresCrit.getText().toString().trim());
             float batteryWarn = Float.parseFloat(editBatteryWarn.getText().toString().trim());
             float batteryCrit = Float.parseFloat(editBatteryCrit.getText().toString().trim());
+            float thermalMin = Float.parseFloat(editThermalMin.getText().toString().trim());
+            float thermalMax = Float.parseFloat(editThermalMax.getText().toString().trim());
+
+            if (thermalMin >= thermalMax) {
+                Toast.makeText(this, "Thermal min must be less than max", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             preferences.saveTelemetryAlarms(
                     rpmWarn, rpmCrit, checkRpmAlarm.isChecked(),
@@ -232,6 +244,7 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
             tracker.reloadThresholds(preferences);
 
             preferences.saveLayoutConfig(getSelectedLayout(), currentSlots);
+            preferences.saveThermalViewerRange(thermalMin, thermalMax);
 
             Toast.makeText(this, "Telemetry settings saved", Toast.LENGTH_SHORT).show();
             finish();

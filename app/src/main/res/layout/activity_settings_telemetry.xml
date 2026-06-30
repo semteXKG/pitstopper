@@ -465,6 +465,53 @@
 
     </RadioGroup>
 
+    <!-- Thermal viewer color range -->
+    <TextView
+        android:id="@+id/textThermalRangeLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:fontFamily="monospace"
+        android:text="Thermal Viewer Range (°C)"
+        android:textColor="@color/telemetry_label"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/radioGroupLayout" />
+
+    <EditText
+        android:id="@+id/editThermalMin"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="4dp"
+        android:background="#FF222222"
+        android:fontFamily="monospace"
+        android:hint="Min"
+        android:inputType="numberDecimal|numberSigned"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/telemetry_label"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toStartOf="@id/editThermalMax"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textThermalRangeLabel" />
+
+    <EditText
+        android:id="@+id/editThermalMax"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:background="#FF222222"
+        android:fontFamily="monospace"
+        android:hint="Max"
+        android:inputType="numberDecimal|numberSigned"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/telemetry_label"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/editThermalMin"
+        app:layout_constraintTop_toTopOf="@id/editThermalMin" />
+
     <!-- Layout preview — tiles are clickable to change sensor assignment -->
     <LinearLayout
         android:id="@+id/layoutPreview"
@@ -474,7 +521,7 @@
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/radioGroupLayout" />
+        app:layout_constraintTop_toBottomOf="@id/editThermalMin" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideWarn"
