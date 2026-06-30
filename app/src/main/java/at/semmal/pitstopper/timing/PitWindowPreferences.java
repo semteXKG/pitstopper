@@ -91,6 +91,9 @@ public class PitWindowPreferences {
     private static final String[] DEFAULT_SLOTS_2_4 = {
         "RPM", "THROTTLE_BRAKE", "COOLANT", "OIL_TEMP", "OIL_PRES", "BATTERY"
     };
+    private static final String[] DEFAULT_SLOTS_2_2_2 = {
+        "OIL_TEMP", "OIL_PRES", "THERMAL_FL", "THERMAL_FR", "THERMAL_RL", "THERMAL_RR"
+    };
 
     private static final int DEFAULT_RPM_WARN = 5500;
     private static final int DEFAULT_RPM_CRIT = 6500;
@@ -376,7 +379,14 @@ public class PitWindowPreferences {
     }
 
     public TelemetrySensor[] getSlotSensors(TelemetryLayout layout) {
-        String[] defaults = layout == TelemetryLayout.LAYOUT_2_4 ? DEFAULT_SLOTS_2_4 : DEFAULT_SLOTS_1_2_4;
+        String[] defaults;
+        if (layout == TelemetryLayout.LAYOUT_2_4) {
+            defaults = DEFAULT_SLOTS_2_4;
+        } else if (layout == TelemetryLayout.LAYOUT_2_2_2) {
+            defaults = DEFAULT_SLOTS_2_2_2;
+        } else {
+            defaults = DEFAULT_SLOTS_1_2_4;
+        }
         TelemetrySensor[] result = new TelemetrySensor[layout.slotCount];
         for (int i = 0; i < result.length; i++) {
             String key = KEY_SLOT_PREFIX + layout.key + "_" + i;

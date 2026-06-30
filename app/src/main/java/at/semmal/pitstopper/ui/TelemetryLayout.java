@@ -2,7 +2,8 @@ package at.semmal.pitstopper.ui;
 
 public enum TelemetryLayout {
     LAYOUT_1_2_4("1_2_4", 7),
-    LAYOUT_2_4("2_4", 6);
+    LAYOUT_2_4("2_4", 6),
+    LAYOUT_2_2_2("2_2_2", 6);
 
     public final String key;
     public final int slotCount;

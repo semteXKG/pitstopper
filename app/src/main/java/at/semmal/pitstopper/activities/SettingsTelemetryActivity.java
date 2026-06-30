@@ -35,7 +35,7 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
     private EditText editBatteryWarn, editBatteryCrit;
     private CheckBox checkBatteryAlarm;
 
-    private RadioButton radioLayout124, radioLayout24;
+    private RadioButton radioLayout124, radioLayout24, radioLayout222;
     private LinearLayout layoutPreview;
 
     // Current in-memory slot assignments (edited live, saved on Save)
@@ -46,6 +46,7 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
     // Tier structure per layout: slot counts top → bottom
     private static final int[] TIERS_1_2_4 = {1, 2, 4};
     private static final int[] TIERS_2_4   = {2, 4};
+    private static final int[] TIERS_2_2_2 = {2, 2, 2};
 
     // Short label shown inside each tile
     private static final String[] SENSOR_TILE_LABELS = {
@@ -88,10 +89,12 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
 
         radioLayout124 = findViewById(R.id.radioLayout124);
         radioLayout24 = findViewById(R.id.radioLayout24);
+        radioLayout222 = findViewById(R.id.radioLayout222);
         layoutPreview = findViewById(R.id.layoutPreview);
 
         radioLayout124.setOnClickListener(v -> switchLayout());
         radioLayout24.setOnClickListener(v -> switchLayout());
+        radioLayout222.setOnClickListener(v -> switchLayout());
 
         Button buttonSave = findViewById(R.id.buttonSave);
         Button buttonCancel = findViewById(R.id.buttonCancel);
@@ -127,6 +130,8 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
         TelemetryLayout layout = preferences.getTelemetryLayout();
         if (layout == TelemetryLayout.LAYOUT_2_4) {
             radioLayout24.setChecked(true);
+        } else if (layout == TelemetryLayout.LAYOUT_2_2_2) {
+            radioLayout222.setChecked(true);
         } else {
             radioLayout124.setChecked(true);
         }
@@ -145,7 +150,15 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
     private void buildPreview() {
         layoutPreview.removeAllViews();
 
-        int[] tiers = getSelectedLayout() == TelemetryLayout.LAYOUT_2_4 ? TIERS_2_4 : TIERS_1_2_4;
+        int[] tiers;
+        TelemetryLayout sel = getSelectedLayout();
+        if (sel == TelemetryLayout.LAYOUT_2_4) {
+            tiers = TIERS_2_4;
+        } else if (sel == TelemetryLayout.LAYOUT_2_2_2) {
+            tiers = TIERS_2_2_2;
+        } else {
+            tiers = TIERS_1_2_4;
+        }
         int slot = 0;
 
         for (int tierIdx = 0; tierIdx < tiers.length; tierIdx++) {
@@ -189,7 +202,9 @@ public class SettingsTelemetryActivity extends AppCompatActivity {
     }
 
     private TelemetryLayout getSelectedLayout() {
-        return radioLayout24.isChecked() ? TelemetryLayout.LAYOUT_2_4 : TelemetryLayout.LAYOUT_1_2_4;
+        if (radioLayout222.isChecked()) return TelemetryLayout.LAYOUT_2_2_2;
+        if (radioLayout24.isChecked()) return TelemetryLayout.LAYOUT_2_4;
+        return TelemetryLayout.LAYOUT_1_2_4;
     }
 
     private void saveSettings() {

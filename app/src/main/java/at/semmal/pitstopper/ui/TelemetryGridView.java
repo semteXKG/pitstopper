@@ -70,6 +70,19 @@ public class TelemetryGridView extends View {
                 float x = left + colW * i;
                 canvas.drawLine(x, yMid, x, bottom, gridPaint);
             }
+        } else if (layout == TelemetryLayout.LAYOUT_2_2_2) {
+            // ─────────── 2 / 2 / 2 ───────────
+            // Two horizontal dividers at 1/3 and 2/3 to match tier weights
+            float yFirst = top + totalH / 3f;
+            float ySecond = top + totalH * 2f / 3f;
+            canvas.drawLine(left, yFirst, right, yFirst, gridPaint);
+            canvas.drawLine(left, ySecond, right, ySecond, gridPaint);
+
+            // Each tier: vertical split at 50%
+            float xMid = left + totalW * 0.5f;
+            canvas.drawLine(xMid, top, xMid, yFirst, gridPaint);
+            canvas.drawLine(xMid, yFirst, xMid, ySecond, gridPaint);
+            canvas.drawLine(xMid, ySecond, xMid, bottom, gridPaint);
         } else {
             // ─────────── 1 / 2 / 4 ───────────
             float yMiddle = top + totalH * 0.42f;

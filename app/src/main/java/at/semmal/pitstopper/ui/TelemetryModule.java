@@ -297,6 +297,12 @@ public class TelemetryModule extends CenterModule {
             populateTier(tier1Container, sensors, 0, 1);
             populateTier(tier2Container, sensors, 1, 3);
             populateTier(tier3Container, sensors, 3, 7);
+        } else if (layout == TelemetryLayout.LAYOUT_2_2_2) {
+            setTierWeights(1, 1, 1);
+            tier2Container.setVisibility(View.VISIBLE);
+            populateTier(tier1Container, sensors, 0, 2);
+            populateTier(tier2Container, sensors, 2, 4);
+            populateTier(tier3Container, sensors, 4, 6);
         } else { // LAYOUT_2_4
             setTierWeights(50, 0, 50);
             tier2Container.setVisibility(View.GONE);
@@ -320,7 +326,8 @@ public class TelemetryModule extends CenterModule {
     private void populateTier(LinearLayout container, TelemetrySensor[] sensors, int from, int to) {
         LayoutInflater inflater = LayoutInflater.from(getContext());
         for (int i = from; i < to; i++) {
-            View slot = inflateSlot(inflater, sensors[i]);
+            int columnIndex = i - from;
+            View slot = inflateSlot(inflater, sensors[i], columnIndex);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
             slot.setLayoutParams(params);
@@ -328,45 +335,45 @@ public class TelemetryModule extends CenterModule {
         }
     }
 
-    private View inflateSlot(LayoutInflater inflater, TelemetrySensor sensor) {
+    private View inflateSlot(LayoutInflater inflater, TelemetrySensor sensor, int columnIndex) {
         switch (sensor) {
             case RPM: {
-                View v = inflater.inflate(R.layout.slot_numeric, null);
+                View v = inflater.inflate(numericSlotLayout(columnIndex), null);
                 ((TextView) v.findViewById(R.id.slotLabel)).setText("RPM");
                 rpmValueView = v.findViewById(R.id.slotValue);
                 if (data.hasRpm()) rpmValueView.setText(String.valueOf(data.getRpm()));
                 return v;
             }
             case SPEED: {
-                View v = inflater.inflate(R.layout.slot_numeric, null);
+                View v = inflater.inflate(numericSlotLayout(columnIndex), null);
                 ((TextView) v.findViewById(R.id.slotLabel)).setText("km/h");
                 speedValueView = v.findViewById(R.id.slotValue);
                 if (data.hasSpeed()) speedValueView.setText(String.valueOf(Math.round(data.getSpeedKmh())));
                 return v;
             }
             case COOLANT: {
-                View v = inflater.inflate(R.layout.slot_numeric, null);
+                View v = inflater.inflate(numericSlotLayout(columnIndex), null);
                 ((TextView) v.findViewById(R.id.slotLabel)).setText("COOL");
                 coolantValueView = v.findViewById(R.id.slotValue);
                 if (data.hasCoolant()) coolantValueView.setText(String.format(Locale.US, "%d°", data.getCoolantC()));
                 return v;
             }
             case OIL_TEMP: {
-                View v = inflater.inflate(R.layout.slot_numeric, null);
+                View v = inflater.inflate(numericSlotLayout(columnIndex), null);
                 ((TextView) v.findViewById(R.id.slotLabel)).setText("OIL T");
                 oilTempValueView = v.findViewById(R.id.slotValue);
                 if (data.hasOilTemp()) oilTempValueView.setText(String.format(Locale.US, "%d°", data.getOilTemp()));
                 return v;
             }
             case OIL_PRES: {
-                View v = inflater.inflate(R.layout.slot_numeric, null);
+                View v = inflater.inflate(numericSlotLayout(columnIndex), null);
                 ((TextView) v.findViewById(R.id.slotLabel)).setText("OIL P");
                 oilPresValueView = v.findViewById(R.id.slotValue);
                 if (data.hasOilPres()) oilPresValueView.setText(String.format(Locale.US, "%.1f", data.getOilPres()));
                 return v;
             }
             case BATTERY: {
-                View v = inflater.inflate(R.layout.slot_numeric, null);
+                View v = inflater.inflate(numericSlotLayout(columnIndex), null);
                 ((TextView) v.findViewById(R.id.slotLabel)).setText("BATT");
                 batteryValueView = v.findViewById(R.id.slotValue);
                 if (data.hasBattery()) batteryValueView.setText(String.format(Locale.US, "%.1fV", data.getBatteryV()));
@@ -381,31 +388,31 @@ public class TelemetryModule extends CenterModule {
                 return v;
             }
             case TYRE_FL:
-                return inflateTyreSlot(inflater, "FL", "fl",
+                return inflateTyreSlot(inflater, tyreSlotLayout(columnIndex), "FL", "fl",
                         data.hasTyreFL(), data.getTyprePresFL(), data.getTyreTempFL(), data.getTyreAlarmFL());
             case TYRE_FR:
-                return inflateTyreSlot(inflater, "FR", "fr",
+                return inflateTyreSlot(inflater, tyreSlotLayout(columnIndex), "FR", "fr",
                         data.hasTyreFR(), data.getTyprePresFR(), data.getTyreTempFR(), data.getTyreAlarmFR());
             case TYRE_RL:
-                return inflateTyreSlot(inflater, "RL", "rl",
+                return inflateTyreSlot(inflater, tyreSlotLayout(columnIndex), "RL", "rl",
                         data.hasTyreRL(), data.getTyprePresRL(), data.getTyreTempRL(), data.getTyreAlarmRL());
             case TYRE_RR:
-                return inflateTyreSlot(inflater, "RR", "rr",
+                return inflateTyreSlot(inflater, tyreSlotLayout(columnIndex), "RR", "rr",
                         data.hasTyreRR(), data.getTyprePresRR(), data.getTyreTempRR(), data.getTyreAlarmRR());
             case THERMAL_FL:
-                return inflateThermalSlot(inflater, "FL",
+                return inflateThermalSlot(inflater, thermalSlotLayout(columnIndex), "FL",
                         data.hasThermalFL(), data.getThermalDetectedFL(),
                         data.getThermalOutsideFL(), data.getThermalCenterFL(), data.getThermalInsideFL());
             case THERMAL_FR:
-                return inflateThermalSlot(inflater, "FR",
+                return inflateThermalSlot(inflater, thermalSlotLayout(columnIndex), "FR",
                         data.hasThermalFR(), data.getThermalDetectedFR(),
                         data.getThermalOutsideFR(), data.getThermalCenterFR(), data.getThermalInsideFR());
             case THERMAL_RL:
-                return inflateThermalSlot(inflater, "RL",
+                return inflateThermalSlot(inflater, thermalSlotLayout(columnIndex), "RL",
                         data.hasThermalRL(), data.getThermalDetectedRL(),
                         data.getThermalOutsideRL(), data.getThermalCenterRL(), data.getThermalInsideRL());
             case THERMAL_RR:
-                return inflateThermalSlot(inflater, "RR",
+                return inflateThermalSlot(inflater, thermalSlotLayout(columnIndex), "RR",
                         data.hasThermalRR(), data.getThermalDetectedRR(),
                         data.getThermalOutsideRR(), data.getThermalCenterRR(), data.getThermalInsideRR());
             case EMPTY:
@@ -414,9 +421,9 @@ public class TelemetryModule extends CenterModule {
         }
     }
 
-    private View inflateTyreSlot(LayoutInflater inflater, String label, String posKey,
+    private View inflateTyreSlot(LayoutInflater inflater, int layoutResId, String label, String posKey,
             boolean hasData, Float presBar, int tempC, boolean alarm) {
-        View v = inflater.inflate(R.layout.slot_tyre, null);
+        View v = inflater.inflate(layoutResId, null);
         ((TextView) v.findViewById(R.id.slotTyrePos)).setText(label);
         TextView presView = v.findViewById(R.id.slotTyrePres);
         TextView tempView = v.findViewById(R.id.slotTyreTemp);
@@ -436,9 +443,9 @@ public class TelemetryModule extends CenterModule {
         return v;
     }
 
-    private View inflateThermalSlot(LayoutInflater inflater, String posKey,
+    private View inflateThermalSlot(LayoutInflater inflater, int layoutResId, String posKey,
             boolean hasData, boolean detected, float outside, float center, float inside) {
-        View v = inflater.inflate(R.layout.slot_thermal, null);
+        View v = inflater.inflate(layoutResId, null);
         ((TextView) v.findViewById(R.id.slotThermalPos)).setText(posKey);
         TextView maxView = v.findViewById(R.id.slotThermalMax);
         TextView zonesView = v.findViewById(R.id.slotThermalZones);
@@ -493,6 +500,20 @@ public class TelemetryModule extends CenterModule {
         thermalMaxViewFR = null; thermalZonesViewFR = null;
         thermalMaxViewRL = null; thermalZonesViewRL = null;
         thermalMaxViewRR = null; thermalZonesViewRR = null;
+    }
+
+    // ── Layout helpers ─────────────────────────────────────────────────────────
+
+    private int numericSlotLayout(int columnIndex) {
+        return (columnIndex % 2 == 0) ? R.layout.slot_numeric : R.layout.slot_numeric_left;
+    }
+
+    private int tyreSlotLayout(int columnIndex) {
+        return (columnIndex % 2 == 0) ? R.layout.slot_tyre : R.layout.slot_tyre_left;
+    }
+
+    private int thermalSlotLayout(int columnIndex) {
+        return (columnIndex % 2 == 0) ? R.layout.slot_thermal : R.layout.slot_thermal_left;
     }
 
     // ── Color helpers ──────────────────────────────────────────────────────────
