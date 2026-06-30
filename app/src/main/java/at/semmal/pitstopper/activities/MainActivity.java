@@ -16,6 +16,7 @@ import at.semmal.pitstopper.ui.CountdownModule;
 import at.semmal.pitstopper.ui.CustomModule;
 import at.semmal.pitstopper.ui.PitTimerModule;
 import at.semmal.pitstopper.ui.TelemetryModule;
+import at.semmal.pitstopper.ui.ThermalViewerModule;
 import at.semmal.pitstopper.ui.TroubleshootModule;
 import at.semmal.pitstopper.model.ChatMessage;
 import at.semmal.pitstopper.speech.SpeechToTextManager;
@@ -76,9 +77,10 @@ public class MainActivity extends AppCompatActivity {
     private CountdownModule countdownModule;
     private TelemetryModule telemetryModule;
     private TroubleshootModule troubleshootModule;
+    private ThermalViewerModule thermalViewerModule;
     private CenterModule activeModule;
     private CenterModule preCountdownModule; // module to restore after pit stop
-    private final CenterModule[] swipeModules = new CenterModule[4]; // ordered swipe cycle
+    private final CenterModule[] swipeModules = new CenterModule[5]; // ordered swipe cycle
 
     // MQTT
     private static final String TOPIC_BRIGHTNESS = "fiesta/brightness";
@@ -164,16 +166,19 @@ public class MainActivity extends AppCompatActivity {
                 mqttClientManager,
                 ((PitStopperApplication) getApplication()).getWifiNetworkManager(),
                 preferences);
+        thermalViewerModule = new ThermalViewerModule(this, mqttClientManager, preferences);
         centerModuleContainer.addView(pitTimerModule);
         centerModuleContainer.addView(customModule);
         centerModuleContainer.addView(chatModule);
         centerModuleContainer.addView(countdownModule);
         centerModuleContainer.addView(telemetryModule);
         centerModuleContainer.addView(troubleshootModule);
+        centerModuleContainer.addView(thermalViewerModule);
         swipeModules[0] = pitTimerModule;
         swipeModules[1] = telemetryModule;
         swipeModules[2] = chatModule;
         swipeModules[3] = troubleshootModule;
+        swipeModules[4] = thermalViewerModule;
         activeModule = pitTimerModule;
         pitTimerModule.onActivate();
         customModule.onDeactivate();
@@ -181,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
         countdownModule.onDeactivate();
         telemetryModule.onDeactivate();
         troubleshootModule.onDeactivate();
+        thermalViewerModule.onDeactivate();
 
         // Subscribe to physical button events once — not in onResume to avoid duplicate subscriptions
         subscribeToButtons();
