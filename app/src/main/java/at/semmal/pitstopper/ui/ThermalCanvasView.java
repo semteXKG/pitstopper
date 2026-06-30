@@ -3,7 +3,6 @@ package at.semmal.pitstopper.ui;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.view.View;
 
@@ -57,7 +56,7 @@ public class ThermalCanvasView extends View {
         invalidate();
     }
 
-    /** Set the color map range and rebuild the LUT. */
+    /** Set the color map range and update the view. */
     public void setColorRange(float min, float max) {
         this.minTemp = min;
         this.maxTemp = max;
@@ -127,7 +126,7 @@ public class ThermalCanvasView extends View {
             if (t < 0.25f) {
                 r = 0;
                 g = 0;
-                b = Math.round(255 * (t / 0.25f + 0.25f));
+                b = Math.min(255, Math.round(255 * (t / 0.25f + 0.25f)));
             } else if (t < 0.5f) {
                 r = 0;
                 g = Math.round(255 * ((t - 0.25f) / 0.25f));

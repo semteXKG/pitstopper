@@ -55,4 +55,24 @@ public class ThermalColormapTest {
         int c = ThermalCanvasView.tempToColor(100f, 10f, 80f, lut);
         assertEquals(lut[255], c);
     }
+
+    @Test
+    public void lutBlueChannelDoesNotOverflow() {
+        int[] lut = ThermalCanvasView.buildColormap();
+        for (int i = 0; i < 256; i++) {
+            int r = (lut[i] >> 16) & 0xFF;
+            int g = (lut[i] >> 8) & 0xFF;
+            int b = lut[i] & 0xFF;
+            assertTrue("red overflow at " + i, r <= 255);
+            assertTrue("green overflow at " + i, g <= 255);
+            assertTrue("blue overflow at " + i, b <= 255);
+        }
+    }
+
+    @Test
+    public void blueSegmentReachesFullBlue() {
+        int[] lut = ThermalCanvasView.buildColormap();
+        int b63 = lut[63] & 0xFF;
+        assertTrue("blue at index 63 should be > 200: " + b63, b63 > 200);
+    }
 }
