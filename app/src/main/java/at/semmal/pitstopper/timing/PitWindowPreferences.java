@@ -84,6 +84,12 @@ public class PitWindowPreferences {
     private static final String KEY_TELEMETRY_LAYOUT = "telemetry_layout";
     private static final String KEY_SLOT_PREFIX = "telemetry_slot_";
 
+    // Thermal viewer settings
+    private static final String KEY_THERMAL_VIEWER_MIN = "thermal_viewer_min";
+    private static final String KEY_THERMAL_VIEWER_MAX = "thermal_viewer_max";
+    private static final float DEFAULT_THERMAL_VIEWER_MIN = 10.0f;
+    private static final float DEFAULT_THERMAL_VIEWER_MAX = 80.0f;
+
     // Default slot assignments per layout (sensor names matching TelemetrySensor enum)
     private static final String[] DEFAULT_SLOTS_1_2_4 = {
         "RPM", "SPEED", "THROTTLE_BRAKE", "COOLANT", "OIL_TEMP", "OIL_PRES", "BATTERY"
@@ -373,6 +379,16 @@ public class PitWindowPreferences {
     public float getBatteryWarn()     { return prefs.getFloat(KEY_BATTERY_WARN, DEFAULT_BATTERY_WARN); }
     public float getBatteryCrit()     { return prefs.getFloat(KEY_BATTERY_CRIT, DEFAULT_BATTERY_CRIT); }
     public boolean isBatteryAlarm()   { return prefs.getBoolean(KEY_BATTERY_ALARM, DEFAULT_ALARM_ENABLED); }
+
+    public float getThermalViewerMin() { return prefs.getFloat(KEY_THERMAL_VIEWER_MIN, DEFAULT_THERMAL_VIEWER_MIN); }
+    public float getThermalViewerMax() { return prefs.getFloat(KEY_THERMAL_VIEWER_MAX, DEFAULT_THERMAL_VIEWER_MAX); }
+
+    public void saveThermalViewerRange(float min, float max) {
+        prefs.edit()
+            .putFloat(KEY_THERMAL_VIEWER_MIN, min)
+            .putFloat(KEY_THERMAL_VIEWER_MAX, max)
+            .apply();
+    }
 
     public TelemetryLayout getTelemetryLayout() {
         return TelemetryLayout.fromKey(prefs.getString(KEY_TELEMETRY_LAYOUT, TelemetryLayout.LAYOUT_1_2_4.key));
