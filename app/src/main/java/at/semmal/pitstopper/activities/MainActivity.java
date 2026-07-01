@@ -61,7 +61,13 @@ public class MainActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 1002;
 
-    private ImageButton buttonSettings;
+    private ImageButton buttonMenu;
+    private View menuActions;
+    private View menuOverlay;
+    private View menuItemSettings;
+    private View menuItemSession;
+    private Handler menuCollapseHandler;
+    private Runnable menuCollapseRunnable;
     private ConstraintLayout rootLayout;
     private View progressBar;
     private FrameLayout progressBarContainer;
@@ -136,7 +142,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Initialize views
-        buttonSettings = findViewById(R.id.buttonSettings);
+        buttonMenu = findViewById(R.id.buttonMenu);
+        menuActions = findViewById(R.id.menuActions);
+        menuOverlay = findViewById(R.id.menuOverlay);
+        menuItemSettings = findViewById(R.id.menuItemSettings);
+        menuItemSession = findViewById(R.id.menuItemSession);
+        menuCollapseHandler = new Handler(Looper.getMainLooper());
         rootLayout = findViewById(R.id.rootLayout);
         progressBar = findViewById(R.id.progressBar);
         progressBarContainer = findViewById(R.id.progressBarContainer);
@@ -232,15 +243,29 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        // Set up settings button click listener
-        buttonSettings.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-            startActivity(intent);
+        menuCollapseRunnable = this::collapseMenu;
+
+        buttonMenu.setOnClickListener(v -> {
+            if (menuActions.getVisibility() == View.VISIBLE) {
+                collapseMenu();
+            } else {
+                menuActions.setVisibility(View.VISIBLE);
+                menuOverlay.setVisibility(View.VISIBLE);
+                menuCollapseHandler.postDelayed(menuCollapseRunnable, 4000);
+            }
         });
 
-        ImageButton buttonSession = findViewById(R.id.buttonSession);
-        buttonSession.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, SessionActivity.class)));
+        menuOverlay.setOnClickListener(v -> collapseMenu());
+
+        menuItemSettings.setOnClickListener(v -> {
+            collapseMenu();
+            startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+        });
+
+        menuItemSession.setOnClickListener(v -> {
+            collapseMenu();
+            startActivity(new Intent(MainActivity.this, SessionActivity.class));
+        });
 
         // Swipe up or down on the center module container to toggle between modules
         centerModuleContainer.setOnModuleSwipeListener(swipeUp -> {
@@ -375,9 +400,22 @@ public class MainActivity extends AppCompatActivity {
         telemetryModule.buildLayout();
     }
 
+    private void collapseMenu() {
+        if (menuActions != null) {
+            menuActions.setVisibility(View.GONE);
+        }
+        if (menuOverlay != null) {
+            menuOverlay.setVisibility(View.GONE);
+        }
+        if (menuCollapseHandler != null && menuCollapseRunnable != null) {
+            menuCollapseHandler.removeCallbacks(menuCollapseRunnable);
+        }
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
+        collapseMenu();
         // Stop updating the clock when activity is no longer visible
         handler.removeCallbacks(updateTimeRunnable);
         
