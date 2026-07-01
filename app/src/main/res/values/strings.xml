@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">pitstopper</string>
     <string name="settings">Settings</string>
+    <string name="menu">Menu</string>
+    <string name="team_session">Team Session</string>
     <string name="alert_settings">Alert Settings</string>
     <string name="race_start_time">Race Start Time</string>
     <string name="pit_window_opens_after">Pit Window Opens After (minutes)</string>
