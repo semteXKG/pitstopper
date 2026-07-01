@@ -168,6 +168,19 @@ public class ThermalViewerModule extends CenterModule {
         }
     }
 
+    /** Parsed segmentation frame: per-pixel zone labels (length 768, row-major). */
+    public static class SegFrame {
+        public final boolean detected;
+        public final int pixels;
+        public final int[] labels; // length 768, or all-zeros when !detected
+
+        public SegFrame(boolean detected, int pixels, int[] labels) {
+            this.detected = detected;
+            this.pixels = pixels;
+            this.labels = labels;
+        }
+    }
+
     /**
      * Parse a raw thermal payload. Returns null on malformed data.
      * Expected: {"ts":<uint32>,"ta":<float>,"pixels":[[<float>×32]×24]}
@@ -189,6 +202,32 @@ public class ThermalViewerModule extends CenterModule {
             return new RawThermalFrame(ta, pixels);
         } catch (JSONException e) {
             try { Log.w(TAG, "Malformed raw thermal payload: " + e.getMessage()); } catch (RuntimeException ignored) {}
+            return null;
+        }
+    }
+
+    /**
+     * Parse a /seg payload. Returns null on malformed data.
+     * Expected: {"ts":<uint32>,"detected":<bool>,"pixels":<uint16>,"labels":[[<int>×32]×24]}
+     */
+    public static SegFrame parseSegPayload(byte[] payload) {
+        try {
+            JSONObject json = new JSONObject(new String(payload));
+            boolean detected = json.optBoolean("detected", false);
+            int pixels = json.optInt("pixels", 0);
+            JSONArray labelsArray = json.optJSONArray("labels");
+            if (labelsArray == null || labelsArray.length() != 24) return null;
+            int[] labels = new int[24 * 32];
+            for (int y = 0; y < 24; y++) {
+                JSONArray row = labelsArray.getJSONArray(y);
+                if (row.length() != 32) return null;
+                for (int x = 0; x < 32; x++) {
+                    labels[y * 32 + x] = row.getInt(x);
+                }
+            }
+            return new SegFrame(detected, pixels, labels);
+        } catch (JSONException e) {
+            try { Log.w(TAG, "Malformed seg payload: " + e.getMessage()); } catch (RuntimeException ignored) {}
             return null;
         }
     }
