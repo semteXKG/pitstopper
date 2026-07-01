@@ -6,6 +6,10 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.view.View;
 
+import androidx.core.content.ContextCompat;
+
+import at.semmal.pitstopper.R;
+
 /**
  * Custom View that renders a 24×32 thermal pixel array as a color-mapped,
  * GPU-scaled bitmap. Header overlay shows position label, ambient temp,
@@ -24,12 +28,20 @@ public class ThermalCanvasView extends View {
     private final Paint dotPaint;
     private final String label;
 
+    private static final int ZONE_TINT_ALPHA = 0x22;
+    private static final int LABELS_LEN = SRC_ROWS * SRC_COLS;
+
     private float[][] pixels = new float[SRC_ROWS][SRC_COLS];
     private float ta = Float.NaN;
     private long lastUpdateMs = 0;
     private int[] colormap = buildColormap();
     private float minTemp = 10f;
     private float maxTemp = 80f;
+    private int[] labels = null;
+    private final Paint zoneFillPaint;
+    private final Paint zoneOutlinePaint;
+    private final Paint zoneBoundaryPaint;
+    private final int[] zoneColors;
 
     public ThermalCanvasView(Context context, String label) {
         super(context);
@@ -46,6 +58,31 @@ public class ThermalCanvasView extends View {
         textPaint.setFakeBoldText(true);
         dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         dotPaint.setStyle(Paint.Style.FILL);
+
+        int cold = resolveColor(context, R.color.thermal_cold);
+        int warm = resolveColor(context, R.color.thermal_warm);
+        int hot  = resolveColor(context, R.color.thermal_hot);
+        zoneFillPaint  = new Paint(Paint.ANTI_ALIAS_FLAG);
+        zoneFillPaint.setStyle(Paint.Style.FILL);
+        zoneOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        zoneOutlinePaint.setStyle(Paint.Style.STROKE);
+        zoneOutlinePaint.setColor(0xFFFFFFFF);
+        zoneBoundaryPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        zoneBoundaryPaint.setStyle(Paint.Style.STROKE);
+        if (!isInEditMode()) {
+            float dp = getResources().getDisplayMetrics().density;
+            zoneOutlinePaint.setStrokeWidth(2f * dp);
+            zoneBoundaryPaint.setStrokeWidth(1.5f * dp);
+        }
+        zoneColors = new int[] { 0, cold, warm, hot };
+    }
+
+    private static int resolveColor(Context context, int resId) {
+        try {
+            return androidx.core.content.ContextCompat.getColor(context, resId);
+        } catch (RuntimeException ignored) {
+            return 0;
+        }
     }
 
     /** Update the thermal frame. Call on the UI thread. */
@@ -63,6 +100,13 @@ public class ThermalCanvasView extends View {
         invalidate();
     }
 
+    /** Store per-pixel zone labels (length 24*32, row-major) and invalidate. */
+    public void setLabels(int[] labels) {
+        if (labels != null && labels.length != LABELS_LEN) return;
+        this.labels = labels;
+        invalidate();
+    }
+
     /** Return the position label (FL/FR/RL/RR). Used by ThermalViewerModule for tap-to-expand. */
     public String getLabel() {
         return label;
@@ -72,6 +116,7 @@ public class ThermalCanvasView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         drawThermal(canvas);
+        drawZones(canvas);
         drawHeader(canvas);
     }
 
@@ -85,6 +130,73 @@ public class ThermalCanvasView extends View {
         bitmap.setPixels(bitmapPixels, 0, SRC_COLS, 0, 0, SRC_COLS, SRC_ROWS);
         // Draw scaled — GPU does bilinear interpolation via FILTER_BITMAP_FLAG
         canvas.drawBitmap(bitmap, null, new android.graphics.RectF(0, 0, getWidth(), getHeight()), bitmapPaint);
+    }
+
+    private void drawZones(Canvas canvas) {
+        if (labels == null) return;
+        boolean any = false;
+        for (int i = 0; i < LABELS_LEN; i++) {
+            if (labels[i] != 0) { any = true; break; }
+        }
+        if (!any) return;
+
+        float sx = (float) getWidth()  / SRC_COLS;
+        float sy = (float) getHeight() / SRC_ROWS;
+
+        for (int y = 0; y < SRC_ROWS; y++) {
+            for (int x = 0; x < SRC_COLS; x++) {
+                int z = labels[y * SRC_COLS + x];
+                if (z <= 0 || z > 3) continue;
+                int base = zoneColors[z];
+                zoneFillPaint.setColor((ZONE_TINT_ALPHA << 24) | (base & 0x00FFFFFF));
+                float left = x * sx;
+                float top  = y * sy;
+                canvas.drawRect(left, top, left + sx, top + sy, zoneFillPaint);
+            }
+        }
+
+        for (int y = 0; y < SRC_ROWS; y++) {
+            for (int x = 0; x < SRC_COLS; x++) {
+                int a = labels[y * SRC_COLS + x];
+                int ax = x + 1, ay = y + 1;
+                if (ax < SRC_COLS) {
+                    int b = labels[y * SRC_COLS + ax];
+                    drawEdge(canvas, x, y, ax, y, a, b, sx, sy);
+                }
+                if (ay < SRC_ROWS) {
+                    int b = labels[ay * SRC_COLS + x];
+                    drawEdge(canvas, x, y, x, ay, a, b, sx, sy);
+                }
+            }
+        }
+    }
+
+    private void drawEdge(Canvas canvas, int x0, int y0, int x1, int y1,
+                          int a, int b, float sx, float sy) {
+        boolean aOn = a > 0;
+        boolean bOn = b > 0;
+        Paint p;
+        if (aOn != bOn) {
+            p = zoneOutlinePaint;
+        } else if (aOn && a != b) {
+            int lo = Math.min(a, b);
+            p = zoneBoundaryPaint;
+            int base = zoneColors[lo];
+            p.setColor((0xFF << 24) | (base & 0x00FFFFFF));
+            if (!isInEditMode()) {
+                float dp = getResources().getDisplayMetrics().density;
+                p.setStrokeWidth(1.5f * dp);
+            }
+        } else {
+            return;
+        }
+        if (y0 == y1) {
+            float fx = x1 * sx;
+            canvas.drawLine(fx, y0 * sy, fx, (y0 + 1) * sy, p);
+        } else {
+            float fy = y1 * sy;
+            canvas.drawLine(x0 * sx, fy, (x0 + 1) * sx, fy, p);
+        }
     }
 
     private void drawHeader(Canvas canvas) {
