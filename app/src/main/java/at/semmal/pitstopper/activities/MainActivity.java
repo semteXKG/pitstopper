@@ -66,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
     private View menuOverlay;
     private View menuItemSettings;
     private View menuItemSession;
-    private Handler menuCollapseHandler;
     private Runnable menuCollapseRunnable;
     private ConstraintLayout rootLayout;
     private View progressBar;
@@ -147,7 +146,6 @@ public class MainActivity extends AppCompatActivity {
         menuOverlay = findViewById(R.id.menuOverlay);
         menuItemSettings = findViewById(R.id.menuItemSettings);
         menuItemSession = findViewById(R.id.menuItemSession);
-        menuCollapseHandler = new Handler(Looper.getMainLooper());
         rootLayout = findViewById(R.id.rootLayout);
         progressBar = findViewById(R.id.progressBar);
         progressBarContainer = findViewById(R.id.progressBarContainer);
@@ -249,9 +247,13 @@ public class MainActivity extends AppCompatActivity {
             if (menuActions.getVisibility() == View.VISIBLE) {
                 collapseMenu();
             } else {
+                menuActions.setAlpha(0);
                 menuActions.setVisibility(View.VISIBLE);
+                menuActions.animate().alpha(1).setDuration(200);
+                menuOverlay.setAlpha(0);
                 menuOverlay.setVisibility(View.VISIBLE);
-                menuCollapseHandler.postDelayed(menuCollapseRunnable, 4000);
+                menuOverlay.animate().alpha(1).setDuration(200);
+                handler.postDelayed(menuCollapseRunnable, 4000);
             }
         });
 
@@ -402,13 +404,19 @@ public class MainActivity extends AppCompatActivity {
 
     private void collapseMenu() {
         if (menuActions != null) {
-            menuActions.setVisibility(View.GONE);
+            menuActions.animate().alpha(0).setDuration(200).withEndAction(() -> {
+                menuActions.setVisibility(View.GONE);
+                menuActions.setAlpha(1);
+            });
         }
         if (menuOverlay != null) {
-            menuOverlay.setVisibility(View.GONE);
+            menuOverlay.animate().alpha(0).setDuration(200).withEndAction(() -> {
+                menuOverlay.setVisibility(View.GONE);
+                menuOverlay.setAlpha(1);
+            });
         }
-        if (menuCollapseHandler != null && menuCollapseRunnable != null) {
-            menuCollapseHandler.removeCallbacks(menuCollapseRunnable);
+        if (handler != null && menuCollapseRunnable != null) {
+            handler.removeCallbacks(menuCollapseRunnable);
         }
     }
 

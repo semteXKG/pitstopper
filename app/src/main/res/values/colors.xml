@@ -33,4 +33,5 @@
     <color name="thermal_hot">#FFEF4444</color>
     <color name="thermal_no_detect">#FF6B7280</color>
     <color name="telemetry_label_bg">#1C1C1C</color>
+    <color name="menu_background">#E61C1C1C</color>
 </resources>
