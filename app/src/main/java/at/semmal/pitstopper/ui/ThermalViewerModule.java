@@ -30,6 +30,7 @@ public class ThermalViewerModule extends CenterModule {
     private static final String[] POSITIONS = {"FL", "FR", "RL", "RR"};
     private static final String RAW_TOPIC_PREFIX = "fiesta/tire-temp/";
     private static final String RAW_TOPIC_SUFFIX = "/raw";
+    private static final String SEG_TOPIC_SUFFIX = "/seg";
 
     private final MqttClientManager mqttClientManager;
     private final PitWindowPreferences preferences;
@@ -87,8 +88,10 @@ public class ThermalViewerModule extends CenterModule {
             v.setColorRange(min, max);
         }
         for (String pos : POSITIONS) {
-            String topic = RAW_TOPIC_PREFIX + pos + RAW_TOPIC_SUFFIX;
-            mqttClientManager.subscribe(topic, payload -> handleRawMessage(pos, payload));
+            String rawTopic = RAW_TOPIC_PREFIX + pos + RAW_TOPIC_SUFFIX;
+            mqttClientManager.subscribe(rawTopic, payload -> handleRawMessage(pos, payload));
+            String segTopic = RAW_TOPIC_PREFIX + pos + SEG_TOPIC_SUFFIX;
+            mqttClientManager.subscribe(segTopic, payload -> handleSegMessage(pos, payload));
         }
         stalenessHandler.postDelayed(stalenessRunnable, 2000);
     }
@@ -97,8 +100,10 @@ public class ThermalViewerModule extends CenterModule {
     public void onDeactivate() {
         stalenessHandler.removeCallbacks(stalenessRunnable);
         for (String pos : POSITIONS) {
-            String topic = RAW_TOPIC_PREFIX + pos + RAW_TOPIC_SUFFIX;
-            mqttClientManager.unsubscribe(topic);
+            String rawTopic = RAW_TOPIC_PREFIX + pos + RAW_TOPIC_SUFFIX;
+            mqttClientManager.unsubscribe(rawTopic);
+            String segTopic = RAW_TOPIC_PREFIX + pos + SEG_TOPIC_SUFFIX;
+            mqttClientManager.unsubscribe(segTopic);
         }
         setVisibility(View.GONE);
     }
@@ -110,6 +115,18 @@ public class ThermalViewerModule extends CenterModule {
             for (int i = 0; i < 4; i++) {
                 if (POSITIONS[i].equals(pos) && views[i] != null) {
                     views[i].update(frame.pixels, frame.ta);
+                }
+            }
+        });
+    }
+
+    private void handleSegMessage(String pos, byte[] payload) {
+        SegFrame frame = parseSegPayload(payload);
+        if (frame == null) return;
+        mainHandler.post(() -> {
+            for (int i = 0; i < 4; i++) {
+                if (POSITIONS[i].equals(pos) && views[i] != null) {
+                    views[i].setLabels(frame.labels);
                 }
             }
         });
