@@ -20,6 +20,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Close button aligned to the screen edges (12dp margin) to match the main screen hamburger icon.
+         The root layout has 32dp padding, so -20dp margins compensate to reach the screen edges. -->
+    <ImageButton
+        android:id="@+id/buttonClose"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="-20dp"
+        android:layout_marginTop="-20dp"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Close"
+        android:src="@drawable/ic_close"
+        app:tint="@color/text_primary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <!-- Race -->
     <LinearLayout
         android:id="@+id/rowRace"

@@ -8,6 +8,7 @@ import at.semmal.pitstopper.timing.PitWindowPreferences;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -35,6 +36,8 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings_hub);
         hideSystemUI();
+
+        findViewById(R.id.buttonClose).setOnClickListener(v -> finish());
 
         preferences = new PitWindowPreferences(this);
 
