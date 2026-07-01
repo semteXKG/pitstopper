@@ -118,35 +118,100 @@
         app:layout_constraintStart_toEndOf="@+id/progressBarContainer"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Settings button — declared AFTER centerModuleContainer for higher Z-order so it receives touches first -->
+    <!-- Invisible overlay to catch taps outside the open menu -->
+    <View
+        android:id="@+id/menuOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Main menu button — opens a small action menu -->
     <ImageButton
-        android:id="@+id/buttonSettings"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:layout_margin="16dp"
+        android:id="@+id/buttonMenu"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="12dp"
         android:padding="8dp"
         android:scaleType="fitCenter"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/settings"
-        android:src="@drawable/ic_settings"
+        android:contentDescription="@string/menu"
+        android:src="@drawable/ic_menu"
         app:tint="@color/text_primary"
         app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Team Session button — below the settings button -->
-    <ImageButton
-        android:id="@+id/buttonSession"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:layout_margin="16dp"
+    <!-- Action menu — expands below the main menu button -->
+    <LinearLayout
+        android:id="@+id/menuActions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/menu_actions_bg"
+        android:orientation="vertical"
         android:padding="8dp"
-        android:scaleType="fitCenter"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Team Session"
-        android:src="@drawable/ic_session"
-        app:tint="@color/text_primary"
+        android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@+id/liveTimingPanel"
-        app:layout_constraintTop_toBottomOf="@id/buttonSettings" />
+        app:layout_constraintTop_toBottomOf="@id/buttonMenu">
+
+        <LinearLayout
+            android:id="@+id/menuItemSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_settings"
+                app:tint="@color/text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="@string/settings"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/menuItemSession"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_session"
+                app:tint="@color/text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="@string/team_session"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
